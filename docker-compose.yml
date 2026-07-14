@@ -1,0 +1,30 @@
+# Docker Compose — Control Contable
+#
+# Supabase manages its own Docker containers via the Supabase CLI.
+# Use `supabase start` and `supabase stop` to manage the local DB stack.
+#
+# This file is a reference for teams that prefer docker-compose orchestration
+# or need to add additional services beyond what Supabase CLI provides.
+#
+# Supabase local ports (configured in supabase/config.toml):
+#   API:    http://localhost:54321
+#   DB:     postgresql://postgres:postgres@localhost:54322/postgres
+#   Studio: http://localhost:54323
+#   Inbox:  http://localhost:54324
+
+version: '3.8'
+
+services:
+  # Add custom services here if needed beyond Supabase CLI defaults.
+  # Example: background job processor, caching layer, etc.
+
+  # Example future service:
+  # redis:
+  #   image: redis:7-alpine
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+
+# volumes:
+#   redis_data:

@@ -1,0 +1,18 @@
+{
+  "name": "@control-contable/types",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint src --max-warnings 0",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@control-contable/config": "workspace:*",
+    "typescript": "^5.7.3"
+  }
+}

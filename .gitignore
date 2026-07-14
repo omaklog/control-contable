@@ -1,0 +1,59 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+.turbo/
+
+# Environment variables — NEVER commit real env files
+.env
+.env.local
+.env*.local
+*.env
+!.env.example
+!.env.local.example
+!.env.*.example
+
+# Supabase local state
+supabase/.temp/
+supabase/.branches/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*.suo
+*.user
+
+# TypeScript
+*.tsbuildinfo
+
+# Package manager
+.yarn/
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
