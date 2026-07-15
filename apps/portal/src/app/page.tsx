@@ -1,8 +1,11 @@
+import { requireApp } from '@control-contable/auth'
 import Box from '@mui/material/Box'
-import Typography from '@mui/material/Typography'
 import Container from '@mui/material/Container'
+import Typography from '@mui/material/Typography'
 
-export default function HomePage() {
+export default async function HomePage() {
+  const profile = await requireApp('portal')
+
   return (
     <Container maxWidth="md">
       <Box
@@ -20,6 +23,9 @@ export default function HomePage() {
         </Typography>
         <Typography variant="h6" color="text.secondary">
           Sistema de administración del despacho
+        </Typography>
+        <Typography variant="body1">
+          Sesión iniciada como {profile.fullName ?? profile.id}
         </Typography>
       </Box>
     </Container>

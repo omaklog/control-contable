@@ -10,6 +10,8 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@control-contable/auth": "workspace:*",
+    "@control-contable/supabase-client": "workspace:*",
     "@control-contable/types": "workspace:*",
     "@control-contable/ui": "workspace:*",
     "@control-contable/utils": "workspace:*",
@@ -18,10 +20,12 @@
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^6.4.0",
     "@mui/material": "^6.4.0",
-    "@supabase/supabase-js": "^2.47.10",
+    "@supabase/supabase-js": "^2.110.5",
+    "formik": "^2.4.6",
     "next": "^15.1.6",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "yup": "^1.6.1"
   },
   "devDependencies": {
     "@control-contable/config": "workspace:*",

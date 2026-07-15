@@ -1,0 +1,61 @@
+import { type Capability, requireCapability, roleDefaultCapabilities } from '@control-contable/auth'
+import { createServerSupabaseClient } from '@control-contable/supabase-client/server'
+import Container from '@mui/material/Container'
+import Typography from '@mui/material/Typography'
+
+import { UsuariosClient } from './UsuariosClient'
+
+/**
+ * Historia 3: alta manual (sin invitación), cambio de rol y
+ * activación/desactivación — reemplaza el placeholder de la Historia 1.
+ * Historia 2: ajuste de permisos individuales por usuario, por encima de la
+ * plantilla por defecto de su rol (FR-014, research.md #13).
+ */
+export default async function UsuariosPage() {
+  const currentProfile = await requireCapability('manage_users')
+  const supabase = await createServerSupabaseClient()
+
+  const [{ data: profilesData }, { data: overridesData }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('id, role, is_active, full_name')
+      .order('created_at', { ascending: true }),
+    supabase.from('permission_overrides').select('profile_id, capability, granted'),
+  ])
+
+  const overridesByProfile = new Map<string, { capability: Capability; granted: boolean }[]>()
+  for (const override of overridesData ?? []) {
+    const capability = override.capability as Capability
+    const list = overridesByProfile.get(override.profile_id) ?? []
+    list.push({ capability, granted: override.granted })
+    overridesByProfile.set(override.profile_id, list)
+  }
+
+  const profiles = (profilesData ?? []).map((row) => {
+    const overrides = overridesByProfile.get(row.id) ?? []
+    const capabilities = new Set(roleDefaultCapabilities(row.role))
+    for (const override of overrides) {
+      if (override.granted) capabilities.add(override.capability)
+      else capabilities.delete(override.capability)
+    }
+    return {
+      id: row.id,
+      role: row.role,
+      isActive: row.is_active,
+      fullName: row.full_name,
+      capabilities: Array.from(capabilities),
+      overrides: Object.fromEntries(overrides.map((o) => [o.capability, o.granted])) as Partial<
+        Record<Capability, boolean>
+      >,
+    }
+  })
+
+  return (
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Typography variant="h4" component="h1" gutterBottom>
+        Gestión de usuarios
+      </Typography>
+      <UsuariosClient profiles={profiles} currentProfileId={currentProfile.id} />
+    </Container>
+  )
+}

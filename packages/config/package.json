@@ -8,12 +8,14 @@
     "./prettier": "./prettier/index.js",
     "./typescript/base.json": "./typescript/base.json",
     "./typescript/nextjs.json": "./typescript/nextjs.json",
-    "./typescript/library.json": "./typescript/library.json"
+    "./typescript/library.json": "./typescript/library.json",
+    "./vitest/base": "./vitest/base.ts"
   },
   "dependencies": {
     "@typescript-eslint/eslint-plugin": "^8.20.0",
     "@typescript-eslint/parser": "^8.20.0",
     "eslint": "^9.18.0",
-    "prettier": "^3.4.2"
+    "prettier": "^3.4.2",
+    "vitest": "^3.0.4"
   }
 }

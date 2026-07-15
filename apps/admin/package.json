@@ -7,9 +7,12 @@
     "build": "next build",
     "start": "next start --port 3001",
     "lint": "eslint src --max-warnings 0",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
+    "@control-contable/auth": "workspace:*",
+    "@control-contable/supabase-client": "workspace:*",
     "@control-contable/types": "workspace:*",
     "@control-contable/ui": "workspace:*",
     "@control-contable/utils": "workspace:*",
@@ -18,10 +21,12 @@
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^6.4.0",
     "@mui/material": "^6.4.0",
-    "@supabase/supabase-js": "^2.47.10",
+    "@supabase/supabase-js": "^2.110.5",
+    "formik": "^2.4.6",
     "next": "^15.1.6",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "yup": "^1.6.1"
   },
   "devDependencies": {
     "@control-contable/config": "workspace:*",
@@ -29,6 +34,7 @@
     "@types/node": "^22.10.7",
     "@types/react": "^19.0.4",
     "@types/react-dom": "^19.0.2",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.4"
   }
 }

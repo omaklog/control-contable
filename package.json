@@ -12,6 +12,7 @@
     "build": "turbo build",
     "lint": "turbo lint",
     "type-check": "turbo type-check",
+    "test": "turbo test",
     "clean": "turbo clean",
     "generate:types": "supabase gen types typescript --local > packages/types/src/database.ts",
     "prepare": "husky"

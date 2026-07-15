@@ -1,0 +1,171 @@
+# infra/supabase/kong.yml.template
+#
+# Configuración declarativa del gateway Kong para el stack self-hosted de
+# Supabase (feature 002-supabase-docker-stack). Enruta las cuatro rutas
+# documentadas en specs/002-supabase-docker-stack/contracts/service-endpoints.md
+# (/rest/v1, /auth/v1, /storage/v1, /realtime/v1) más una ruta administrativa
+# hacia postgres-meta que usa Supabase Studio internamente.
+#
+# Kong 2.8.x (sin KONG_ROUTER_FLAVOR: expressions) — estilo clásico de
+# consumers + key-auth, sin llaves "publishable/secret" ni SSO/MCP (fuera de
+# alcance de esta feature, ver research.md §1).
+#
+# Este archivo es una PLANTILLA: los placeholders $SUPABASE_ANON_KEY y
+# $SUPABASE_SERVICE_KEY se resuelven en tiempo de arranque mediante
+# ./kong-entrypoint.sh (Kong 2.8.1 no soporta sustitución de variables de
+# entorno en config declarativa — a diferencia de versiones más recientes).
+
+_format_version: "2.1"
+
+###
+### Consumers
+###
+consumers:
+  - username: anon
+    keyauth_credentials:
+      - key: $SUPABASE_ANON_KEY
+  - username: service_role
+    keyauth_credentials:
+      - key: $SUPABASE_SERVICE_KEY
+
+###
+### Access Control List
+###
+acls:
+  - consumer: anon
+    group: anon
+  - consumer: service_role
+    group: admin
+
+###
+### Rutas de API
+###
+services:
+  ## Rutas abiertas de Auth (no requieren apikey — el propio GoTrue valida el token de la operación)
+  - name: auth-v1-open
+    _comment: "Auth: /auth/v1/verify* -> http://auth:9999/verify*"
+    url: http://auth:9999/verify
+    routes:
+      - name: auth-v1-open
+        strip_path: true
+        paths:
+          - /auth/v1/verify
+    plugins:
+      - name: cors
+
+  - name: auth-v1-open-callback
+    _comment: "Auth: /auth/v1/callback* -> http://auth:9999/callback*"
+    url: http://auth:9999/callback
+    routes:
+      - name: auth-v1-open-callback
+        strip_path: true
+        paths:
+          - /auth/v1/callback
+    plugins:
+      - name: cors
+
+  - name: auth-v1-open-authorize
+    _comment: "Auth: /auth/v1/authorize* -> http://auth:9999/authorize*"
+    url: http://auth:9999/authorize
+    routes:
+      - name: auth-v1-open-authorize
+        strip_path: true
+        paths:
+          - /auth/v1/authorize
+    plugins:
+      - name: cors
+
+  ## Rutas seguras de Auth (requieren apikey vía key-auth)
+  - name: auth-v1
+    _comment: "Auth: /auth/v1/* -> http://auth:9999/*"
+    url: http://auth:9999/
+    routes:
+      - name: auth-v1-all
+        strip_path: true
+        paths:
+          - /auth/v1/
+    plugins:
+      - name: cors
+      - name: key-auth
+        config:
+          hide_credentials: false
+      - name: acl
+        config:
+          hide_groups_header: true
+          allow:
+            - admin
+            - anon
+
+  ## PostgREST
+  - name: rest-v1
+    _comment: "PostgREST: /rest/v1/* -> http://rest:3000/*"
+    url: http://rest:3000/
+    routes:
+      - name: rest-v1-all
+        strip_path: true
+        paths:
+          - /rest/v1/
+    plugins:
+      - name: cors
+      - name: key-auth
+        config:
+          hide_credentials: false
+      - name: acl
+        config:
+          hide_groups_header: true
+          allow:
+            - admin
+            - anon
+
+  ## Realtime
+  - name: realtime-v1
+    _comment: "Realtime: /realtime/v1/* -> ws://realtime:4000/socket/*"
+    url: http://realtime:4000/socket
+    routes:
+      - name: realtime-v1-all
+        strip_path: true
+        paths:
+          - /realtime/v1/
+    plugins:
+      - name: cors
+      - name: key-auth
+        config:
+          hide_credentials: false
+      - name: acl
+        config:
+          hide_groups_header: true
+          allow:
+            - admin
+            - anon
+
+  ## Storage (sin key-auth: las URLs firmadas de Storage no siempre llevan apikey;
+  ## la autorización efectiva la aplica el propio servicio de Storage vía RLS)
+  - name: storage-v1
+    _comment: "Storage: /storage/v1/* -> http://storage:5000/*"
+    url: http://storage:5000/
+    routes:
+      - name: storage-v1-all
+        strip_path: true
+        paths:
+          - /storage/v1/
+    plugins:
+      - name: cors
+
+  ## postgres-meta (uso interno de Supabase Studio — solo rol admin)
+  - name: meta
+    _comment: "pg-meta: /pg/* -> http://meta:8080/*"
+    url: http://meta:8080/
+    routes:
+      - name: meta-all
+        strip_path: true
+        paths:
+          - /pg/
+    plugins:
+      - name: key-auth
+        config:
+          hide_credentials: false
+      - name: acl
+        config:
+          hide_groups_header: true
+          allow:
+            - admin

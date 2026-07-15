@@ -88,7 +88,9 @@ enable_refresh_token_rotation = true
 # Allows session tokens to be refreshed ahead of their expiry time.
 refresh_token_reuse_interval = 10
 # Allow/disallow new user signups to your project.
-enable_signup = true
+# Deshabilitado: FR-010 (feature 003-supabase-auth-roles) — toda cuenta se crea
+# exclusivamente por invitación de un Administrador, nunca por autoregistro público.
+enable_signup = false
 # Allow/disallow anonymous sign-ins to your project.
 enable_anonymous_sign_ins = false
 # Allow/disallow testing manual linking of accounts
@@ -96,6 +98,11 @@ enable_manual_linking = false
 
 [auth.email]
 # Allow/disallow new user signups via email to your project.
+# NOTA: este flag es en realidad el interruptor completo del proveedor de
+# email en GoTrue (GOTRUE_EXTERNAL_EMAIL_ENABLED) — ponerlo en false también
+# bloquea el LOGIN por email/contraseña, no solo el autoregistro. El bloqueo
+# de autoregistro (FR-010) ya lo cubre [auth].enable_signup = false; este debe
+# quedar en true para que el login funcione.
 enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.

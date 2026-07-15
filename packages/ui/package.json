@@ -15,16 +15,25 @@
     "@emotion/react": "^11",
     "@emotion/styled": "^11",
     "@mui/material": "^6",
+    "formik": "^2.4.6",
     "react": "^19",
-    "react-dom": "^19"
+    "react-dom": "^19",
+    "yup": "^1.6.1"
   },
   "dependencies": {
     "@control-contable/types": "workspace:*"
   },
   "devDependencies": {
     "@control-contable/config": "workspace:*",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/material": "^6.4.0",
     "@types/react": "^19.0.4",
     "@types/react-dom": "^19.0.2",
-    "typescript": "^5.7.3"
+    "formik": "^2.4.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.7.3",
+    "yup": "^1.6.1"
   }
 }

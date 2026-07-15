@@ -144,6 +144,7 @@ El sistema debe priorizar la seguridad, confiabilidad y facilidad de mantenimien
     Prettier obligatorio.
     Componentes pequeños y reutilizables.
     Evitar duplicación de código.
+    Nombre de variables, carpetas y funciones consistente y descriptivo y en inglés.
 
 ### UI
 

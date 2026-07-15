@@ -23,6 +23,9 @@ build/
 supabase/.temp/
 supabase/.branches/
 
+# infra/supabase: respaldos generados por scripts/backup.sh (nunca versionar)
+infra/supabase/backups/
+
 # Testing
 coverage/
 .nyc_output/
