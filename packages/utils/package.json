@@ -9,13 +9,18 @@
   },
   "scripts": {
     "lint": "eslint src --max-warnings 0",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@control-contable/types": "workspace:*"
   },
   "devDependencies": {
     "@control-contable/config": "workspace:*",
-    "typescript": "^5.7.3"
+    "@control-contable/supabase-client": "workspace:*",
+    "@supabase/supabase-js": "^2.110.5",
+    "@types/node": "^22.10.7",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.4"
   }
 }

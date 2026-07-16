@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
+import { ALL_CAPABILITIES } from './roles'
 import { resolveCapabilities } from './session'
 
 describe('resolveCapabilities (FR-014, research.md #13)', () => {
   it('sin overrides, devuelve exactamente la plantilla por defecto del rol', () => {
-    expect(new Set(resolveCapabilities('auxiliar', []))).toEqual(new Set([]))
-    expect(new Set(resolveCapabilities('administrador', []))).toEqual(
-      new Set(['manage_users', 'view_auth_audit_log', 'manage_user_permissions']),
+    expect(new Set(resolveCapabilities('auxiliar', []))).toEqual(
+      new Set(['view_clients', 'view_billing', 'view_documents']),
     )
+    expect(new Set(resolveCapabilities('administrador', []))).toEqual(new Set(ALL_CAPABILITIES))
   })
 
   it('un override granted=true agrega una capacidad fuera de la plantilla del rol', () => {

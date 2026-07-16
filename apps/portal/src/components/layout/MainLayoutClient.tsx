@@ -2,6 +2,7 @@
 
 import type { CurrentProfile } from '@control-contable/auth'
 import { createBrowserSupabaseClient } from '@control-contable/supabase-client/browser'
+import { Logo } from '@control-contable/ui'
 import MenuIcon from '@mui/icons-material/Menu'
 import AppBar from '@mui/material/AppBar'
 import Avatar from '@mui/material/Avatar'
@@ -104,6 +105,7 @@ export function MainLayoutClient({
               <MenuIcon />
             </IconButton>
           ) : null}
+          <Logo size={32} />
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             Portal de Control Contable
           </Typography>

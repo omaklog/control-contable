@@ -265,6 +265,9 @@ importers:
       '@emotion/styled':
         specifier: ^11.14.0
         version: 11.14.1(@emotion/react@11.14.0(@types/react@19.2.17)(react@19.2.7))(@types/react@19.2.17)(react@19.2.7)
+      '@mui/icons-material':
+        specifier: ^6.4.0
+        version: 6.5.0(@mui/material@6.5.0(@emotion/react@11.14.0(@types/react@19.2.17)(react@19.2.7))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.17)(react@19.2.7))(@types/react@19.2.17)(react@19.2.7))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@types/react@19.2.17)(react@19.2.7)
       '@mui/material':
         specifier: ^6.4.0
         version: 6.5.0(@emotion/react@11.14.0(@types/react@19.2.17)(react@19.2.7))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.17)(react@19.2.7))(@types/react@19.2.17)(react@19.2.7))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -299,9 +302,21 @@ importers:
       '@control-contable/config':
         specifier: workspace:*
         version: link:../config
+      '@control-contable/supabase-client':
+        specifier: workspace:*
+        version: link:../supabase-client
+      '@supabase/supabase-js':
+        specifier: ^2.110.5
+        version: 2.110.5
+      '@types/node':
+        specifier: ^22.10.7
+        version: 22.20.1
       typescript:
         specifier: ^5.7.3
         version: 5.9.3
+      vitest:
+        specifier: ^3.0.4
+        version: 3.2.7(@types/node@22.20.1)(yaml@2.9.0)
 
 packages:
 

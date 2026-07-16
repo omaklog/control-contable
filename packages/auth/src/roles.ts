@@ -2,7 +2,17 @@ export type AppRole = 'administrador' | 'contador' | 'auxiliar'
 
 export type AppName = 'admin' | 'portal'
 
-export type Capability = 'manage_users' | 'view_auth_audit_log' | 'manage_user_permissions'
+export type Capability =
+  | 'manage_users'
+  | 'view_auth_audit_log'
+  | 'manage_user_permissions'
+  | 'manage_clients'
+  | 'view_clients'
+  | 'manage_billing'
+  | 'view_billing'
+  | 'manage_documents'
+  | 'view_documents'
+  | 'manage_catalogs'
 
 export const ALL_ROLES: readonly AppRole[] = ['administrador', 'contador', 'auxiliar']
 
@@ -10,6 +20,13 @@ export const ALL_CAPABILITIES: readonly Capability[] = [
   'manage_users',
   'view_auth_audit_log',
   'manage_user_permissions',
+  'manage_clients',
+  'view_clients',
+  'manage_billing',
+  'view_billing',
+  'manage_documents',
+  'view_documents',
+  'manage_catalogs',
 ]
 
 /**
@@ -25,13 +42,15 @@ export const ALL_CAPABILITIES: readonly Capability[] = [
  * datos es la que realmente lo impide.
  */
 const ROLE_DEFAULT_CAPABILITIES: Record<AppRole, ReadonlySet<Capability>> = {
-  administrador: new Set<Capability>([
-    'manage_users',
-    'view_auth_audit_log',
-    'manage_user_permissions',
+  administrador: new Set<Capability>(ALL_CAPABILITIES),
+  contador: new Set<Capability>([
+    'manage_clients',
+    'view_clients',
+    'manage_billing',
+    'view_billing',
+    'view_documents',
   ]),
-  contador: new Set<Capability>([]),
-  auxiliar: new Set<Capability>([]),
+  auxiliar: new Set<Capability>(['view_clients', 'view_billing', 'view_documents']),
 }
 
 export function roleDefaultCapabilities(role: AppRole): Capability[] {

@@ -3,6 +3,8 @@ import { createServerSupabaseClient } from '@control-contable/supabase-client/se
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
 
+import { createServiceRoleClient } from '@/lib/supabase/serviceRole'
+
 import { UsuariosClient } from './UsuariosClient'
 
 /**
@@ -15,13 +17,21 @@ export default async function UsuariosPage() {
   const currentProfile = await requireCapability('manage_users')
   const supabase = await createServerSupabaseClient()
 
-  const [{ data: profilesData }, { data: overridesData }] = await Promise.all([
+  // El correo vive únicamente en auth.users (profiles no lo duplica, FR-019,
+  // research.md/spec.md Assumptions) — se obtiene server-side con
+  // service_role, nunca expuesta al navegador.
+  const service = createServiceRoleClient()
+
+  const [{ data: profilesData }, { data: overridesData }, { data: usersData }] = await Promise.all([
     supabase
       .from('profiles')
       .select('id, role, is_active, full_name')
       .order('created_at', { ascending: true }),
     supabase.from('permission_overrides').select('profile_id, capability, granted'),
+    service.auth.admin.listUsers({ perPage: 1000 }),
   ])
+
+  const emailById = new Map(usersData?.users.map((user) => [user.id, user.email ?? '']) ?? [])
 
   const overridesByProfile = new Map<string, { capability: Capability; granted: boolean }[]>()
   for (const override of overridesData ?? []) {
@@ -43,6 +53,7 @@ export default async function UsuariosPage() {
       role: row.role,
       isActive: row.is_active,
       fullName: row.full_name,
+      email: emailById.get(row.id) ?? '',
       capabilities: Array.from(capabilities),
       overrides: Object.fromEntries(overrides.map((o) => [o.capability, o.granted])) as Partial<
         Record<Capability, boolean>

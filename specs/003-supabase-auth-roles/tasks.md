@@ -193,6 +193,30 @@ Monorepo existente (`apps/admin`, `apps/portal`, `packages/*`). Esta feature agr
 
 ---
 
+## Rework #3: nombre obligatorio, mostrar/ocultar contraseña, espacio de logo (sesión de clarificación 2026-07-16)
+
+**Motivo**: revisión de UX detectó que el alta de cuenta no capturaba el nombre completo (la tabla de usuarios mostraba el ID como respaldo), que ningún formulario de contraseña tenía control de mostrar/ocultar, y que no existía ningún espacio reservado para el logotipo del despacho — ver `spec.md` Clarifications (sesión 2026-07-16), FR-015/FR-016/FR-017, SC-008. Implementado directamente sin regenerar `plan.md`/un nuevo `tasks.md` completo (cambio pequeño y acotado, a petición explícita del usuario).
+
+- [x] T070 [US3] Nombre completo obligatorio en el alta de cuenta (FR-015, SC-008): `CreateAccountInput` en `apps/admin/src/app/usuarios/actions.ts` ahora incluye `fullName` (validado con `.trim()`, rechazado si viene vacío, incluido en el `insert` de `profiles.full_name`); `UsuariosClient.tsx` agrega el campo "Nombre completo" al diálogo "Crear cuenta" y deshabilita el botón de envío mientras esté vacío
+- [x] T071 [P] Mostrar/ocultar contraseña (FR-016): agregado un `IconButton` con `Visibility`/`VisibilityOff` (`@mui/icons-material`, nueva dependencia de `packages/ui`) como `endAdornment` del campo de contraseña en `LoginForm.tsx` y `SetNewPasswordForm.tsx` (`packages/ui`) — alterna el `type` del campo entre `password`/`text`
+- [x] T072 [P] Espacio para el logotipo (FR-017): nuevo componente `Logo` (`packages/ui/src/Logo.tsx`, SVG simple renderizado en código, sin depender de un archivo de imagen externo) exportado desde el paquete; usado en `LoginForm.tsx` (centrado, sobre el título) y en el `AppBar` de `MainLayoutClient.tsx` (`apps/portal`, junto al título "Portal de Control Contable")
+- [x] T073 Validado con Playwright contra `apps/admin`/`apps/portal` reales: logo visible en `/login` y en el `AppBar` del portal; el campo de contraseña alterna correctamente entre oculto/visible; el botón "Crear cuenta" permanece deshabilitado sin nombre y se habilita al capturarlo; la cuenta creada aparece en la tabla mostrando el nombre completo, no el ID — capturas en `/tmp/pw-test/login-with-logo-eye.png`
+- [x] T074 Ejecutado `pnpm lint`, `pnpm type-check`, `pnpm test` y `pnpm build` en todo el monorepo tras este rework: 7/7 paquetes limpios, 36/36 pruebas pasan, ambas apps compilan en producción — sin hallazgos pendientes
+
+---
+
+## Rework #4: editar nombre de cuenta existente + columna de correo (sesión de clarificación 2026-07-16, mismo día)
+
+**Motivo**: las 5 cuentas creadas antes de T070 (incluida la del propio Administrador de prueba) seguían mostrando el identificador interno en la tabla, ya que el nombre obligatorio solo aplicaba al alta — ver `spec.md` FR-018/FR-019, SC-009.
+
+- [x] T075 [US3] Extraído `createServiceRoleClient()` de `actions.ts` a `apps/admin/src/lib/supabase/serviceRole.ts` (mismo cliente, ahora compartido); agregada la Server Action `updateUserFullName({ profileId, fullName })` en `actions.ts` (valida `.trim()` no vacío, `UPDATE profiles.full_name` vía el cliente de sesión — ya permitido por la RLS existente de `is_administrador()`, sin necesitar `service_role`)
+- [x] T076 [US3] Agregado el botón "Editar nombre" por fila y su diálogo dedicado en `UsuariosClient.tsx` (mismo patrón que "Permisos"/"Contraseña temporal": abre con el nombre actual precargado, botón "Guardar" deshabilitado si el campo queda vacío)
+- [x] T077 [US3] Agregada la columna "Correo electrónico" (FR-019): `page.tsx` ahora también usa `createServiceRoleClient()` para `auth.admin.listUsers({ perPage: 1000 })`, combina por `id` con `profiles`, y pasa `email` a cada fila de `UsuariosClient`
+- [x] T078 Validado con Playwright contra `apps/admin` real: la columna de correo aparece con el valor correcto para cada cuenta; editar el nombre de la cuenta Administrador de prueba (existente, sin `full_name`) en 334ms (SC-009 « 1 min) hace que la tabla muestre el nombre en vez del ID de inmediato — captura en `/tmp/pw-test/usuarios-table-final.png`
+- [x] T079 Ejecutado `pnpm lint`, `pnpm type-check`, `pnpm test` y `pnpm build` en todo el monorepo: 7/7 paquetes limpios, 36/36 pruebas pasan, ambas apps compilan en producción — sin hallazgos pendientes
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies

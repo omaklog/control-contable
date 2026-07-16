@@ -28,6 +28,427 @@ export type Database = {
   }
   public: {
     Tables: {
+      business_audit_log: {
+        Row: {
+          accion: string
+          actor_id: string | null
+          creado_en: string
+          detalle: Json | null
+          entidad: string
+          entidad_id: string
+          id: number
+        }
+        Insert: {
+          accion: string
+          actor_id?: string | null
+          creado_en?: string
+          detalle?: Json | null
+          entidad: string
+          entidad_id: string
+          id?: never
+        }
+        Update: {
+          accion?: string
+          actor_id?: string | null
+          creado_en?: string
+          detalle?: Json | null
+          entidad?: string
+          entidad_id?: string
+          id?: never
+        }
+        Relationships: []
+      }
+      cargo_pagos: {
+        Row: {
+          cargo_id: string
+          monto_aplicado: number
+          pago_id: string
+        }
+        Insert: {
+          cargo_id: string
+          monto_aplicado: number
+          pago_id: string
+        }
+        Update: {
+          cargo_id?: string
+          monto_aplicado?: number
+          pago_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'cargo_pagos_cargo_id_fkey'
+            columns: ['cargo_id']
+            isOneToOne: false
+            referencedRelation: 'cargos_cobranza'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'cargo_pagos_pago_id_fkey'
+            columns: ['pago_id']
+            isOneToOne: false
+            referencedRelation: 'pagos'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      cargos_cobranza: {
+        Row: {
+          cliente_id: string
+          concepto: string
+          created_at: string
+          created_by: string | null
+          estado: Database['public']['Enums']['cargo_estado']
+          fecha_vencimiento: string
+          id: string
+          monto: number
+          periodo_anio: number
+          periodo_mes: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cliente_id: string
+          concepto: string
+          created_at?: string
+          created_by?: string | null
+          estado?: Database['public']['Enums']['cargo_estado']
+          fecha_vencimiento: string
+          id?: string
+          monto: number
+          periodo_anio: number
+          periodo_mes: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cliente_id?: string
+          concepto?: string
+          created_at?: string
+          created_by?: string | null
+          estado?: Database['public']['Enums']['cargo_estado']
+          fecha_vencimiento?: string
+          id?: string
+          monto?: number
+          periodo_anio?: number
+          periodo_mes?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'cargos_cobranza_cliente_id_fkey'
+            columns: ['cliente_id']
+            isOneToOne: false
+            referencedRelation: 'clientes'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      categorias_documento: {
+        Row: {
+          activa: boolean
+          created_at: string
+          created_by: string | null
+          descripcion: string | null
+          id: string
+          nombre: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          activa?: boolean
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string | null
+          id?: string
+          nombre: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          activa?: boolean
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string | null
+          id?: string
+          nombre?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      clientes: {
+        Row: {
+          correo: string
+          created_at: string
+          created_by: string | null
+          direccion_fiscal: string | null
+          estado: Database['public']['Enums']['cliente_estado']
+          fecha_alta: string
+          fecha_baja: string | null
+          id: string
+          nombre: string
+          regimen_fiscal_codigo: string
+          responsable_id: string | null
+          rfc: string
+          telefono: string | null
+          tipo_persona: Database['public']['Enums']['tipo_persona']
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          correo: string
+          created_at?: string
+          created_by?: string | null
+          direccion_fiscal?: string | null
+          estado?: Database['public']['Enums']['cliente_estado']
+          fecha_alta?: string
+          fecha_baja?: string | null
+          id?: string
+          nombre: string
+          regimen_fiscal_codigo: string
+          responsable_id?: string | null
+          rfc: string
+          telefono?: string | null
+          tipo_persona: Database['public']['Enums']['tipo_persona']
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          correo?: string
+          created_at?: string
+          created_by?: string | null
+          direccion_fiscal?: string | null
+          estado?: Database['public']['Enums']['cliente_estado']
+          fecha_alta?: string
+          fecha_baja?: string | null
+          id?: string
+          nombre?: string
+          regimen_fiscal_codigo?: string
+          responsable_id?: string | null
+          rfc?: string
+          telefono?: string | null
+          tipo_persona?: Database['public']['Enums']['tipo_persona']
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'clientes_regimen_fiscal_codigo_fkey'
+            columns: ['regimen_fiscal_codigo']
+            isOneToOne: false
+            referencedRelation: 'regimenes_fiscales'
+            referencedColumns: ['codigo']
+          },
+        ]
+      }
+      contactos: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          created_by: string | null
+          email: string | null
+          id: string
+          nombre: string
+          telefono: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          nombre: string
+          telefono: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          nombre?: string
+          telefono?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'contactos_cliente_id_fkey'
+            columns: ['cliente_id']
+            isOneToOne: false
+            referencedRelation: 'clientes'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      documentos: {
+        Row: {
+          cargado_por: string
+          categoria_id: string
+          cliente_id: string
+          created_at: string
+          created_by: string | null
+          documento_anterior_id: string | null
+          estado: Database['public']['Enums']['documento_estado']
+          fecha_carga: string
+          formato: string
+          id: string
+          nombre_original: string
+          ruta_almacenamiento: string
+          tamano_bytes: number
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          cargado_por: string
+          categoria_id: string
+          cliente_id: string
+          created_at?: string
+          created_by?: string | null
+          documento_anterior_id?: string | null
+          estado?: Database['public']['Enums']['documento_estado']
+          fecha_carga?: string
+          formato: string
+          id?: string
+          nombre_original: string
+          ruta_almacenamiento: string
+          tamano_bytes: number
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          cargado_por?: string
+          categoria_id?: string
+          cliente_id?: string
+          created_at?: string
+          created_by?: string | null
+          documento_anterior_id?: string | null
+          estado?: Database['public']['Enums']['documento_estado']
+          fecha_carga?: string
+          formato?: string
+          id?: string
+          nombre_original?: string
+          ruta_almacenamiento?: string
+          tamano_bytes?: number
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'documentos_categoria_id_fkey'
+            columns: ['categoria_id']
+            isOneToOne: false
+            referencedRelation: 'categorias_documento'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'documentos_cliente_id_fkey'
+            columns: ['cliente_id']
+            isOneToOne: false
+            referencedRelation: 'clientes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'documentos_documento_anterior_id_fkey'
+            columns: ['documento_anterior_id']
+            isOneToOne: false
+            referencedRelation: 'documentos'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      metodos_pago: {
+        Row: {
+          activo: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          nombre: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nombre: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nombre?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      pagos: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          created_by: string | null
+          fecha_pago: string
+          id: string
+          metodo_pago_id: string
+          monto: number
+          referencia: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          created_by?: string | null
+          fecha_pago?: string
+          id?: string
+          metodo_pago_id: string
+          monto: number
+          referencia?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          created_by?: string | null
+          fecha_pago?: string
+          id?: string
+          metodo_pago_id?: string
+          monto?: number
+          referencia?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'pagos_cliente_id_fkey'
+            columns: ['cliente_id']
+            isOneToOne: false
+            referencedRelation: 'clientes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'pagos_metodo_pago_id_fkey'
+            columns: ['metodo_pago_id']
+            isOneToOne: false
+            referencedRelation: 'metodos_pago'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       permission_overrides: {
         Row: {
           capability: string
@@ -137,6 +558,90 @@ export type Database = {
         }
         Relationships: []
       }
+      recibos: {
+        Row: {
+          cliente_id: string
+          concepto: string
+          created_at: string
+          created_by: string | null
+          fecha_emision: string
+          folio: string
+          id: string
+          monto: number
+          pago_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cliente_id: string
+          concepto: string
+          created_at?: string
+          created_by?: string | null
+          fecha_emision?: string
+          folio: string
+          id?: string
+          monto: number
+          pago_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cliente_id?: string
+          concepto?: string
+          created_at?: string
+          created_by?: string | null
+          fecha_emision?: string
+          folio?: string
+          id?: string
+          monto?: number
+          pago_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'recibos_cliente_id_fkey'
+            columns: ['cliente_id']
+            isOneToOne: false
+            referencedRelation: 'clientes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'recibos_pago_id_fkey'
+            columns: ['pago_id']
+            isOneToOne: true
+            referencedRelation: 'pagos'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      regimenes_fiscales: {
+        Row: {
+          aplica_persona_fisica: boolean
+          aplica_persona_moral: boolean
+          codigo: string
+          descripcion: string
+          fecha_fin_vigencia: string | null
+          fecha_inicio_vigencia: string
+        }
+        Insert: {
+          aplica_persona_fisica: boolean
+          aplica_persona_moral: boolean
+          codigo: string
+          descripcion: string
+          fecha_fin_vigencia?: string | null
+          fecha_inicio_vigencia: string
+        }
+        Update: {
+          aplica_persona_fisica?: boolean
+          aplica_persona_moral?: boolean
+          codigo?: string
+          descripcion?: string
+          fecha_fin_vigencia?: string | null
+          fecha_inicio_vigencia?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -150,13 +655,30 @@ export type Database = {
         Args: { limit_rows?: number }
         Returns: Json[]
       }
+      has_capability: {
+        Args: { cap: string }
+        Returns: boolean
+      }
       is_administrador: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      log_business_audit: {
+        Args: {
+          p_accion: string
+          p_detalle?: Json
+          p_entidad: string
+          p_entidad_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: 'administrador' | 'contador' | 'auxiliar'
+      cargo_estado: 'pendiente' | 'pagado' | 'vencido' | 'cancelado'
+      cliente_estado: 'activo' | 'inactivo'
+      documento_estado: 'activo' | 'reemplazado'
+      tipo_persona: 'fisica' | 'moral'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -802,6 +1324,10 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ['administrador', 'contador', 'auxiliar'],
+      cargo_estado: ['pendiente', 'pagado', 'vencido', 'cancelado'],
+      cliente_estado: ['activo', 'inactivo'],
+      documento_estado: ['activo', 'reemplazado'],
+      tipo_persona: ['fisica', 'moral'],
     },
   },
   storage: {

@@ -1,8 +1,12 @@
 'use client'
 
+import Visibility from '@mui/icons-material/Visibility'
+import VisibilityOff from '@mui/icons-material/VisibilityOff'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import IconButton from '@mui/material/IconButton'
+import InputAdornment from '@mui/material/InputAdornment'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useFormik } from 'formik'
@@ -21,6 +25,7 @@ export interface SetNewPasswordFormProps {
 
 export function SetNewPasswordForm({ title, onSubmit, onSuccess }: SetNewPasswordFormProps) {
   const [formError, setFormError] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
 
   const formik = useFormik({
     initialValues: { password: '' },
@@ -51,7 +56,7 @@ export function SetNewPasswordForm({ title, onSubmit, onSuccess }: SetNewPasswor
       <TextField
         name="password"
         label="Nueva contraseña"
-        type="password"
+        type={showPassword ? 'text' : 'password'}
         value={formik.values.password}
         onChange={formik.handleChange}
         onBlur={formik.handleBlur}
@@ -59,6 +64,21 @@ export function SetNewPasswordForm({ title, onSubmit, onSuccess }: SetNewPasswor
         helperText={formik.touched.password ? formik.errors.password : undefined}
         autoComplete="new-password"
         fullWidth
+        slotProps={{
+          input: {
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  onClick={() => setShowPassword((value) => !value)}
+                  edge="end"
+                >
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          },
+        }}
       />
       <Button type="submit" variant="contained" disabled={formik.isSubmitting} fullWidth>
         {formik.isSubmitting ? 'Guardando…' : 'Guardar nueva contraseña'}

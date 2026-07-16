@@ -21,6 +21,14 @@
 - Q: ¿Cómo se restringe el acceso entre `apps/admin` y `apps/portal` para los 3 roles de personal? → A: `apps/admin` es exclusiva del rol Administrador; `apps/portal` es accesible para Administrador, Contador y Auxiliar. El sistema de permisos (más allá de esta regla de acceso por app) se gestiona por usuario individual desde `apps/admin`.
 - Q: ¿Qué tan granular debe ser la gestión de permisos por usuario? → A: Cada rol sigue definiendo una plantilla de capacidades por defecto; un Administrador puede activar/desactivar capacidades individuales para un usuario específico por encima de esa plantilla (ajuste por excepción, no reemplazo total del modelo por rol).
 
+### Session 2026-07-16
+
+- Q: ¿El campo "Nombre completo" en el formulario de alta de cuenta (Crear cuenta) debe ser obligatorio u opcional? → A: Obligatorio — el Administrador no puede crear la cuenta sin capturarlo, para que la tabla de usuarios nunca muestre el identificador interno como respaldo.
+- Q: ¿El botón de mostrar/ocultar contraseña debe aplicarse solo al inicio de sesión, o también al formulario de establecer nueva contraseña? → A: A ambos formularios (inicio de sesión y establecer nueva contraseña) — misma mejora de UX aplicada de forma consistente a cualquier campo de contraseña del sistema.
+- Q: ¿Dónde debe vivir el espacio para el logo — solo en el formulario de login, o también en el layout principal del portal? → A: En ambos: el formulario de inicio de sesión (`LoginForm`, compartido por ambas apps) y el `AppBar` del layout principal de `apps/portal` (feature 004-portal-main-layout), junto al título "Portal de Control Contable".
+- Q: Para las cuentas ya existentes (creadas antes de que el nombre fuera obligatorio), ¿cómo debe un Administrador editar su "Nombre completo"? → A: Mediante un diálogo dedicado por fila (mismo patrón que "Permisos"/"Contraseña temporal"), no edición en línea.
+- Q: ¿Cómo debe obtenerse el correo electrónico para la nueva columna de la tabla de Cuentas, dado que `profiles` no lo almacena? → A: Consulta server-side con `service_role` en la página (Server Component), combinando por `id` con `auth.users` — sin duplicar el dato en `profiles`.
+
 ## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Acceso del personal del despacho por rol y aplicación (Priority: P1)
@@ -39,6 +47,7 @@ Un miembro del personal del despacho inicia sesión con su correo y contraseña.
 4. **Given** un usuario con rol "Contador" o "Auxiliar" y credenciales válidas, **When** inicia sesión en portal, **Then** accede exitosamente y ve/usa únicamente las funciones que corresponden a su rol (y a los ajustes individuales de permisos que le haya configurado un Administrador).
 5. **Given** un usuario autenticado, **When** intenta acceder directamente (por URL) a una función no permitida para su rol, **Then** el sistema le deniega el acceso y muestra un mensaje de "no autorizado".
 6. **Given** un usuario con credenciales inválidas, **When** intenta iniciar sesión, **Then** el sistema rechaza el acceso y muestra un mensaje de error genérico sin revelar si el correo existe.
+7. **Given** un usuario capturando su contraseña en el formulario de inicio de sesión, **When** activa el control de mostrar/ocultar contraseña, **Then** puede ver u ocultar el texto que escribió, sin que eso afecte el resultado del envío del formulario.
 
 ---
 
@@ -60,7 +69,7 @@ Un Administrador, desde el Panel Administrativo, ajusta las capacidades específ
 
 ### User Story 3 - Gestión de usuarios, roles y permisos (Priority: P3)
 
-Un Administrador crea nuevas cuentas de personal de forma manual (captura correo y rol; sin proceso de invitación por correo electrónico), les asigna un rol, y puede modificar o revocar ese rol (o desactivar la cuenta) cuando cambian las responsabilidades de esa persona. También puede asignarle una contraseña temporal a una cuenta existente cuando el usuario la haya olvidado, sin depender de un proveedor de correo electrónico para ello.
+Un Administrador crea nuevas cuentas de personal de forma manual (captura nombre completo, correo y rol; sin proceso de invitación por correo electrónico), les asigna un rol, y puede modificar o revocar ese rol (o desactivar la cuenta) cuando cambian las responsabilidades de esa persona. También puede asignarle una contraseña temporal a una cuenta existente cuando el usuario la haya olvidado, sin depender de un proveedor de correo electrónico para ello.
 
 **Why this priority**: Es necesaria para operar el sistema en el día a día (alta de nuevos empleados, bajas, cambios de rol), pero el sistema puede lanzarse con un primer conjunto de usuarios creado manualmente mientras esta gestión se completa, por lo que tiene menor prioridad que el acceso seguro en sí.
 
@@ -68,11 +77,14 @@ Un Administrador crea nuevas cuentas de personal de forma manual (captura correo
 
 **Acceptance Scenarios**:
 
-1. **Given** un Administrador autenticado, **When** crea manualmente una cuenta nueva (correo y rol, sin invitación por correo) para un miembro del personal, **Then** el sistema genera una contraseña temporal que se muestra una sola vez en pantalla al Administrador; la nueva cuenta puede iniciar sesión con ella, es obligada a establecer una nueva contraseña antes de continuar (mismo mecanismo que Acceptance Scenario 5), y su acceso corresponde exactamente al rol asignado.
-2. **Given** un Administrador autenticado, **When** cambia el rol de un usuario existente, **Then** los permisos efectivos de ese usuario cambian de inmediato (a más tardar en su siguiente acción o al refrescar su sesión).
-3. **Given** un Administrador autenticado, **When** desactiva la cuenta de un usuario, **Then** ese usuario no puede iniciar sesión y cualquier sesión activa que tuviera deja de tener acceso.
-4. **Given** un usuario que no es Administrador, **When** intenta acceder a las funciones de gestión de usuarios/roles, **Then** el sistema le deniega el acceso.
-5. **Given** un Administrador autenticado, **When** genera y asigna una contraseña temporal a un usuario existente, **Then** el sistema la genera automáticamente (sin enviar ningún correo), la muestra una sola vez en pantalla, y ese usuario puede iniciar sesión con ella pero es obligado de inmediato a establecer una nueva contraseña antes de poder acceder a cualquier otra función.
+1. **Given** un Administrador autenticado, **When** crea manualmente una cuenta nueva (nombre completo, correo y rol, sin invitación por correo) para un miembro del personal, **Then** el sistema genera una contraseña temporal que se muestra una sola vez en pantalla al Administrador; la nueva cuenta puede iniciar sesión con ella, es obligada a establecer una nueva contraseña antes de continuar (mismo mecanismo que Acceptance Scenario 5), y su acceso corresponde exactamente al rol asignado.
+2. **Given** un Administrador autenticado, **When** intenta crear una cuenta nueva sin capturar el nombre completo, **Then** el sistema rechaza el formulario y no crea la cuenta hasta que ese campo se complete.
+3. **Given** un Administrador autenticado, **When** cambia el rol de un usuario existente, **Then** los permisos efectivos de ese usuario cambian de inmediato (a más tardar en su siguiente acción o al refrescar su sesión).
+4. **Given** un Administrador autenticado, **When** desactiva la cuenta de un usuario, **Then** ese usuario no puede iniciar sesión y cualquier sesión activa que tuviera deja de tener acceso.
+5. **Given** un usuario que no es Administrador, **When** intenta acceder a las funciones de gestión de usuarios/roles, **Then** el sistema le deniega el acceso.
+6. **Given** un Administrador autenticado, **When** genera y asigna una contraseña temporal a un usuario existente, **Then** el sistema la genera automáticamente (sin enviar ningún correo), la muestra una sola vez en pantalla, y ese usuario puede iniciar sesión con ella pero es obligado de inmediato a establecer una nueva contraseña antes de poder acceder a cualquier otra función.
+7. **Given** un Administrador autenticado, **When** edita el nombre completo de una cuenta existente (incluida una creada antes de que este campo fuera obligatorio) mediante el diálogo dedicado, **Then** la tabla de gestión de usuarios muestra el nuevo nombre para esa cuenta en vez de su identificador interno.
+8. **Given** un Administrador autenticado, **When** consulta la tabla de gestión de usuarios, **Then** ve el correo electrónico de cada cuenta en una columna dedicada.
 
 ---
 
@@ -85,6 +97,7 @@ Un Administrador crea nuevas cuentas de personal de forma manual (captura correo
 - ¿Qué sucede si un Administrador desactiva o elimina su propia cuenta, o la de todos los demás Administradores, dejando al sistema sin ningún usuario con ese rol?
 - ¿Qué sucede si un usuario olvida su contraseña? Un Administrador le asigna una contraseña temporal generada por el sistema (sin depender de correo electrónico); al iniciar sesión con ella, el usuario debe establecer una nueva contraseña antes de poder usar cualquier otra función.
 - ¿Qué sucede si un usuario con una contraseña temporal pendiente de cambio intenta navegar directamente a cualquier otra sección (por URL)? El sistema debe redirigirlo obligatoriamente a la pantalla de cambio de contraseña hasta que la complete.
+- ¿Qué sucede con las cuentas creadas antes de que el nombre completo fuera obligatorio? Un Administrador puede completarlo en cualquier momento mediante el diálogo "Editar nombre" (FR-018); hasta que lo haga, la tabla de usuarios sigue mostrando el identificador interno como respaldo para esa cuenta.
 
 ## Requirements _(mandatory)_
 
@@ -103,10 +116,15 @@ Un Administrador crea nuevas cuentas de personal de forma manual (captura correo
 - **FR-012**: El sistema DEBE mostrar mensajes de error genéricos ante intentos de inicio de sesión fallidos, sin revelar si el correo ingresado corresponde a una cuenta existente.
 - **FR-013**: El sistema DEBE obligar a todo usuario que inicie sesión con una contraseña temporal asignada por un Administrador a establecer una nueva contraseña antes de permitirle acceder a cualquier otra función o página del sistema.
 - **FR-014**: El sistema DEBE permitir que un Administrador active o desactive capacidades específicas para un usuario individual, por encima de la plantilla de capacidades por defecto de su rol, sin afectar a otros usuarios con el mismo rol.
+- **FR-015**: El sistema DEBE requerir que un Administrador capture el nombre completo del usuario al crear una cuenta nueva; este campo es obligatorio y el alta no puede completarse sin él.
+- **FR-016**: El sistema DEBE permitir a los usuarios alternar la visibilidad del texto que escriben en cualquier campo de contraseña (mostrar/ocultar), tanto en el formulario de inicio de sesión como en el de establecer una nueva contraseña.
+- **FR-017**: El sistema DEBE reservar un espacio visual para el logotipo del despacho en el formulario de inicio de sesión y en el encabezado del layout principal de `apps/portal`; mientras no exista un logotipo real, DEBE mostrarse un marcador de posición sin bloquear el uso de la aplicación.
+- **FR-018**: El sistema DEBE permitir que un Administrador edite el nombre completo de una cuenta existente (mediante un diálogo dedicado, por fila), incluidas las cuentas creadas antes de que este campo fuera obligatorio.
+- **FR-019**: El sistema DEBE mostrar el correo electrónico de cada cuenta como una columna en la tabla de gestión de usuarios.
 
 ### Key Entities _(include if feature involves data)_
 
-- **Usuario**: Cuenta de autenticación individual (correo, estado activo/inactivo, indicador de "debe cambiar su contraseña" pendiente). Representa a un miembro del personal del despacho — ya no existe una distinción de tipo de cuenta "cliente"/"personal": todas las cuentas son de personal.
+- **Usuario**: Cuenta de autenticación individual (nombre completo obligatorio y editable por un Administrador, correo, estado activo/inactivo, indicador de "debe cambiar su contraseña" pendiente). Representa a un miembro del personal del despacho — ya no existe una distinción de tipo de cuenta "cliente"/"personal": todas las cuentas son de personal.
 - **Rol**: Conjunto de permisos por defecto con nombre (Administrador, Contador, Auxiliar) que determina qué acciones puede realizar un usuario.
 - **Permiso**: Acción concreta sobre un recurso del sistema (por ejemplo, "ver expediente", "editar cobranza", "gestionar usuarios") que se agrupa dentro de un rol.
 - **Asignación Usuario-Rol**: Relación entre un Usuario y el Rol que tiene vigente en un momento dado, incluyendo historial de cambios de rol.
@@ -124,6 +142,8 @@ Un Administrador crea nuevas cuentas de personal de forma manual (captura correo
 - **SC-005**: Un Administrador puede generar y entregar una contraseña temporal a un usuario en menos de 1 minuto, sin depender de ningún proceso de correo electrónico; el 100% de los inicios de sesión realizados con una contraseña temporal resultan en que el usuario deba establecer una nueva contraseña antes de acceder a cualquier otra función.
 - **SC-006**: El 100% de los eventos de autenticación relevantes (login, logout, fallos, cambios de rol/estado) quedan registrados y son consultables para auditoría.
 - **SC-007**: Un Administrador puede ajustar una capacidad específica para un usuario individual en menos de 1 minuto, y ese ajuste aplica de inmediato para ese usuario sin afectar a otros usuarios con el mismo rol.
+- **SC-008**: El 100% de las cuentas creadas a partir de esta actualización muestran su nombre completo en la tabla de gestión de usuarios — ninguna cuenta nueva vuelve a mostrar el identificador interno como respaldo.
+- **SC-009**: Un Administrador puede editar el nombre completo de una cuenta existente en menos de 1 minuto, y el cambio se refleja de inmediato en la tabla de gestión de usuarios.
 
 ## Assumptions
 
@@ -135,3 +155,7 @@ Un Administrador crea nuevas cuentas de personal de forma manual (captura correo
 - Las políticas de contraseña (longitud mínima, complejidad) siguen las prácticas estándar de la industria para aplicaciones web con datos sensibles, sin requisitos adicionales especificados.
 - La duración y renovación de sesión sigue el comportamiento estándar de una aplicación web (sesión persistente con renovación automática, invalidada al cerrar sesión o al revocar/cambiar el rol del usuario).
 - El restablecimiento de contraseña (FR-008/FR-013) y el alta de cuentas nuevas (FR-010) ya no dependen de un proveedor de correo (SMTP): ambos son flujos administrados exclusivamente por un Administrador, con contraseña temporal generada por el sistema y cambio obligatorio en el siguiente inicio de sesión. Ya no existe el concepto de invitación con expiración/estado pendiente-aceptada.
+- El nombre completo (FR-015) es obligatorio al crear cuentas nuevas; para las cuentas ya existentes sin nombre, un Administrador puede completarlo en cualquier momento mediante el diálogo de edición (FR-018) — no hay una migración automática de datos (ver Edge Cases).
+- El correo electrónico (FR-019) se obtiene en el momento de renderizar la tabla de gestión de usuarios mediante una consulta server-side con `service_role` (nunca expuesta al navegador), sin duplicar el dato en `profiles` — consistente con que `profiles` nunca ha almacenado credenciales ni datos que ya viven en `auth.users`.
+- El logotipo real del despacho todavía no existe (FR-017): el espacio reservado en el formulario de login y en el `AppBar` de `apps/portal` usa un marcador de posición (un SVG simple o una referencia de imagen que no resuelve) hasta que se proporcione el archivo definitivo; sustituirlo no debería requerir cambios de layout.
+- El cambio del `AppBar` de `apps/portal` (FR-017) es un ajuste puntual sobre un componente ya construido por la feature `004-portal-main-layout` (`MainLayoutClient`), no una reapertura completa de esa feature.

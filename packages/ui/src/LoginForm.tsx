@@ -1,13 +1,19 @@
 'use client'
 
+import Visibility from '@mui/icons-material/Visibility'
+import VisibilityOff from '@mui/icons-material/VisibilityOff'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import IconButton from '@mui/material/IconButton'
+import InputAdornment from '@mui/material/InputAdornment'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useFormik } from 'formik'
 import { useState } from 'react'
 import * as Yup from 'yup'
+
+import { Logo } from './Logo'
 
 const loginSchema = Yup.object({
   email: Yup.string().email('Correo inválido').required('El correo es requerido'),
@@ -31,6 +37,7 @@ export interface LoginFormProps {
 
 export function LoginForm({ title, onSubmit, onSuccess }: LoginFormProps) {
   const [formError, setFormError] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
 
   const formik = useFormik<LoginFormValues>({
     initialValues: { email: '', password: '' },
@@ -54,7 +61,10 @@ export function LoginForm({ title, onSubmit, onSuccess }: LoginFormProps) {
       noValidate
       sx={{ display: 'flex', flexDirection: 'column', gap: 2, maxWidth: 360, mx: 'auto', mt: 8 }}
     >
-      <Typography variant="h5" component="h1">
+      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+        <Logo size={56} />
+      </Box>
+      <Typography variant="h5" component="h1" textAlign="center">
         {title}
       </Typography>
       {formError ? <Alert severity="error">{formError}</Alert> : null}
@@ -73,7 +83,7 @@ export function LoginForm({ title, onSubmit, onSuccess }: LoginFormProps) {
       <TextField
         name="password"
         label="Contraseña"
-        type="password"
+        type={showPassword ? 'text' : 'password'}
         value={formik.values.password}
         onChange={formik.handleChange}
         onBlur={formik.handleBlur}
@@ -81,6 +91,21 @@ export function LoginForm({ title, onSubmit, onSuccess }: LoginFormProps) {
         helperText={formik.touched.password ? formik.errors.password : undefined}
         autoComplete="current-password"
         fullWidth
+        slotProps={{
+          input: {
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  onClick={() => setShowPassword((value) => !value)}
+                  edge="end"
+                >
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          },
+        }}
       />
       <Button type="submit" variant="contained" disabled={formik.isSubmitting} fullWidth>
         {formik.isSubmitting ? 'Ingresando…' : 'Iniciar sesión'}

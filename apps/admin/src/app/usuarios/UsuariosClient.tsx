@@ -27,6 +27,7 @@ import {
   createAccount,
   setAccountActive,
   setPermissionOverride,
+  updateUserFullName,
 } from './actions'
 
 // Listas locales (no importadas como valores desde '@control-contable/auth'):
@@ -40,12 +41,26 @@ const ALL_CAPABILITIES: readonly Capability[] = [
   'manage_users',
   'view_auth_audit_log',
   'manage_user_permissions',
+  'manage_clients',
+  'view_clients',
+  'manage_billing',
+  'view_billing',
+  'manage_documents',
+  'view_documents',
+  'manage_catalogs',
 ]
 
 const CAPABILITY_LABELS: Record<Capability, string> = {
   manage_users: 'Gestionar usuarios (alta, roles, activar/desactivar)',
   view_auth_audit_log: 'Consultar auditoría de autenticación',
   manage_user_permissions: 'Ajustar permisos individuales de otros usuarios',
+  manage_clients: 'Gestionar clientes (alta, edición, baja)',
+  view_clients: 'Consultar clientes',
+  manage_billing: 'Gestionar cobranza (cargos y pagos)',
+  view_billing: 'Consultar cobranza',
+  manage_documents: 'Gestionar documentos del expediente',
+  view_documents: 'Consultar documentos del expediente',
+  manage_catalogs: 'Administrar catálogos (categorías, métodos de pago, etc.)',
 }
 
 export interface UsuarioRow {
@@ -53,6 +68,7 @@ export interface UsuarioRow {
   role: AppRole
   isActive: boolean
   fullName: string | null
+  email: string
   capabilities: Capability[]
   overrides: Partial<Record<Capability, boolean>>
 }
@@ -67,6 +83,7 @@ export function UsuariosClient({
   const [isPending, startTransition] = useTransition()
   const [globalError, setGlobalError] = useState<string | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
+  const [createFullName, setCreateFullName] = useState('')
   const [createEmail, setCreateEmail] = useState('')
   const [createRole, setCreateRole] = useState<AppRole>('auxiliar')
   const [confirmTarget, setConfirmTarget] = useState<{ id: string; nextActive: boolean } | null>(
@@ -76,6 +93,9 @@ export function UsuariosClient({
   const [tempPasswordResult, setTempPasswordResult] = useState<string | null>(null)
   const [permissionsTargetId, setPermissionsTargetId] = useState<string | null>(null)
   const permissionsTarget = profiles.find((profile) => profile.id === permissionsTargetId) ?? null
+  const [editNameTargetId, setEditNameTargetId] = useState<string | null>(null)
+  const [editNameValue, setEditNameValue] = useState('')
+  const editNameTarget = profiles.find((profile) => profile.id === editNameTargetId) ?? null
 
   function handleRoleChange(profileId: string, event: SelectChangeEvent) {
     const newRole = event.target.value as AppRole
@@ -100,12 +120,17 @@ export function UsuariosClient({
   function handleCreateSubmit() {
     setGlobalError(null)
     startTransition(async () => {
-      const result = await createAccount({ email: createEmail, role: createRole })
+      const result = await createAccount({
+        fullName: createFullName,
+        email: createEmail,
+        role: createRole,
+      })
       if (result.error || !result.temporaryPassword) {
         setGlobalError(result.error ?? 'No se pudo crear la cuenta.')
         return
       }
       setCreateOpen(false)
+      setCreateFullName('')
       setCreateEmail('')
       setTempPasswordResult(result.temporaryPassword)
     })
@@ -134,6 +159,25 @@ export function UsuariosClient({
     })
   }
 
+  function openEditName(profile: UsuarioRow) {
+    setEditNameValue(profile.fullName ?? '')
+    setEditNameTargetId(profile.id)
+  }
+
+  function handleEditNameSubmit() {
+    if (!editNameTargetId) return
+    const profileId = editNameTargetId
+    setGlobalError(null)
+    startTransition(async () => {
+      const result = await updateUserFullName({ profileId, fullName: editNameValue })
+      if (result.error) {
+        setGlobalError(result.error)
+        return
+      }
+      setEditNameTargetId(null)
+    })
+  }
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       {globalError ? <Alert severity="error">{globalError}</Alert> : null}
@@ -152,6 +196,7 @@ export function UsuariosClient({
           <TableHead>
             <TableRow>
               <TableCell>Nombre</TableCell>
+              <TableCell>Correo electrónico</TableCell>
               <TableCell>Rol</TableCell>
               <TableCell>Estado</TableCell>
               <TableCell>Acciones</TableCell>
@@ -161,6 +206,7 @@ export function UsuariosClient({
             {profiles.map((profile) => (
               <TableRow key={profile.id}>
                 <TableCell>{profile.fullName ?? profile.id}</TableCell>
+                <TableCell>{profile.email}</TableCell>
                 <TableCell>
                   <Select
                     size="small"
@@ -178,6 +224,9 @@ export function UsuariosClient({
                 <TableCell>{profile.isActive ? 'Activa' : 'Desactivada'}</TableCell>
                 <TableCell>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    <Button size="small" disabled={isPending} onClick={() => openEditName(profile)}>
+                      Editar nombre
+                    </Button>
                     <Button
                       size="small"
                       color={profile.isActive ? 'error' : 'success'}
@@ -220,6 +269,13 @@ export function UsuariosClient({
             contraseña temporal que deberás entregar al usuario por un canal seguro.
           </Typography>
           <TextField
+            label="Nombre completo"
+            value={createFullName}
+            onChange={(event) => setCreateFullName(event.target.value)}
+            required
+            fullWidth
+          />
+          <TextField
             label="Correo electrónico"
             type="email"
             value={createEmail}
@@ -241,10 +297,35 @@ export function UsuariosClient({
           <Button onClick={() => setCreateOpen(false)}>Cancelar</Button>
           <Button
             variant="contained"
-            disabled={isPending || !createEmail}
+            disabled={isPending || !createFullName.trim() || !createEmail}
             onClick={handleCreateSubmit}
           >
             Crear cuenta
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={Boolean(editNameTarget)} onClose={() => setEditNameTargetId(null)}>
+        <DialogTitle>Editar nombre</DialogTitle>
+        <DialogContent
+          sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1, minWidth: 320 }}
+        >
+          <TextField
+            label="Nombre completo"
+            value={editNameValue}
+            onChange={(event) => setEditNameValue(event.target.value)}
+            required
+            fullWidth
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditNameTargetId(null)}>Cancelar</Button>
+          <Button
+            variant="contained"
+            disabled={isPending || !editNameValue.trim()}
+            onClick={handleEditNameSubmit}
+          >
+            Guardar
           </Button>
         </DialogActions>
       </Dialog>

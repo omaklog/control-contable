@@ -2,11 +2,9 @@
 
 import { type AppRole, type Capability, requireCapability } from '@control-contable/auth'
 import { createServerSupabaseClient } from '@control-contable/supabase-client/server'
-import type { Database } from '@control-contable/types'
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 
-import { env } from '@/lib/env'
+import { createServiceRoleClient } from '@/lib/supabase/serviceRole'
 
 import { wouldRemoveLastActiveAdministrador } from './lastAdminGuard'
 import { generateTemporaryPassword } from './passwordGenerator'
@@ -18,6 +16,7 @@ export interface ActionResult {
 }
 
 export interface CreateAccountInput {
+  fullName: string
   email: string
   role: AppRole
 }
@@ -46,13 +45,9 @@ export interface SetPermissionOverrideInput {
   granted: boolean
 }
 
-function createServiceRoleClient(): SupabaseClient<Database> {
-  if (!env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error('SUPABASE_SERVICE_ROLE_KEY no está configurada.')
-  }
-  return createClient<Database>(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  })
+export interface UpdateFullNameInput {
+  profileId: string
+  fullName: string
 }
 
 async function countActiveAdministradores(
@@ -79,9 +74,16 @@ function mapUpdateError(error: { message: string }): string {
  * `assignTemporaryPassword` (research.md #11), la aplica vía `service_role`
  * (`auth.admin.createUser`), y marca `must_change_password = true` para que
  * el usuario deba establecerla en su primer inicio de sesión. La contraseña
- * se devuelve al llamador para mostrarla una sola vez.
+ * se devuelve al llamador para mostrarla una sola vez. El nombre completo es
+ * obligatorio (FR-015): sin él, la tabla de usuarios no tendría forma de
+ * identificar la cuenta más allá de su identificador interno.
  */
 export async function createAccount(input: CreateAccountInput): Promise<CreateAccountResult> {
+  const fullName = input.fullName.trim()
+  if (!fullName) {
+    return { error: 'El nombre completo es obligatorio.', temporaryPassword: null }
+  }
+
   const currentProfile = await requireCapability('manage_users')
   const service = createServiceRoleClient()
 
@@ -101,6 +103,7 @@ export async function createAccount(input: CreateAccountInput): Promise<CreateAc
 
   const { error: profileError } = await service.from('profiles').insert({
     id: userData.user.id,
+    full_name: fullName,
     role: input.role,
     is_active: true,
     must_change_password: true,
@@ -256,6 +259,32 @@ export async function setPermissionOverride(
   })
   if (error) {
     return { error: 'No se pudo ajustar el permiso. Inténtalo de nuevo.' }
+  }
+
+  revalidatePath('/usuarios')
+  return { error: null }
+}
+
+/**
+ * Edita el nombre completo de una cuenta existente (FR-018) — en particular,
+ * de cuentas creadas antes de que ese campo fuera obligatorio (FR-015) y que
+ * por eso la tabla de usuarios sigue mostrando con su identificador interno.
+ */
+export async function updateUserFullName(input: UpdateFullNameInput): Promise<ActionResult> {
+  const fullName = input.fullName.trim()
+  if (!fullName) {
+    return { error: 'El nombre completo es obligatorio.' }
+  }
+
+  await requireCapability('manage_users')
+  const supabase = await createServerSupabaseClient()
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ full_name: fullName })
+    .eq('id', input.profileId)
+  if (error) {
+    return { error: 'No se pudo actualizar el nombre. Inténtalo de nuevo.' }
   }
 
   revalidatePath('/usuarios')
