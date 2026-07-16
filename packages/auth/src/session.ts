@@ -17,6 +17,8 @@ export interface CurrentProfile {
   mustChangePassword: boolean
   /** Plantilla del rol + permission_overrides del usuario ya resueltos (research.md #13). */
   capabilities: Capability[]
+  /** Correo de auth.getUser() — respaldo del avatar cuando no hay fullName (004-portal-main-layout). */
+  email: string
 }
 
 /**
@@ -84,6 +86,7 @@ export async function getCurrentProfile(): Promise<CurrentProfile | null> {
     fullName: profile.full_name,
     mustChangePassword: profile.must_change_password,
     capabilities: resolveCapabilities(profile.role, overrides ?? []),
+    email: user.email ?? '',
   }
 }
 
