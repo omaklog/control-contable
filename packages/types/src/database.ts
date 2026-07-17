@@ -248,6 +248,8 @@ export type Database = {
           created_at: string
           created_by: string | null
           email: string | null
+          es_principal: boolean
+          estado: Database['public']['Enums']['contacto_estado']
           id: string
           nombre: string
           telefono: string
@@ -259,6 +261,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           email?: string | null
+          es_principal?: boolean
+          estado?: Database['public']['Enums']['contacto_estado']
           id?: string
           nombre: string
           telefono: string
@@ -270,6 +274,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           email?: string | null
+          es_principal?: boolean
+          estado?: Database['public']['Enums']['contacto_estado']
           id?: string
           nombre?: string
           telefono?: string
@@ -677,6 +683,7 @@ export type Database = {
       app_role: 'administrador' | 'contador' | 'auxiliar'
       cargo_estado: 'pendiente' | 'pagado' | 'vencido' | 'cancelado'
       cliente_estado: 'activo' | 'inactivo'
+      contacto_estado: 'activo' | 'obsoleto'
       documento_estado: 'activo' | 'reemplazado'
       tipo_persona: 'fisica' | 'moral'
     }
@@ -1326,6 +1333,7 @@ export const Constants = {
       app_role: ['administrador', 'contador', 'auxiliar'],
       cargo_estado: ['pendiente', 'pagado', 'vencido', 'cancelado'],
       cliente_estado: ['activo', 'inactivo'],
+      contacto_estado: ['activo', 'obsoleto'],
       documento_estado: ['activo', 'reemplazado'],
       tipo_persona: ['fisica', 'moral'],
     },

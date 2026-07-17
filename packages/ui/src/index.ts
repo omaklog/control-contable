@@ -1,4 +1,6 @@
+export { ClienteDetalleClient, type ClienteDetalle, type ContactoRow } from './ClienteDetalleClient'
 export { ClienteForm } from './ClienteForm'
+export { ContactoForm } from './ContactoForm'
 export { LoginForm, type LoginFormProps, type LoginFormValues } from './LoginForm'
 export { Logo } from './Logo'
 export { MainLayoutClient } from './MainLayoutClient'

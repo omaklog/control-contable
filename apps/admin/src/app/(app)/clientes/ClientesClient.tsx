@@ -18,6 +18,7 @@ import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
 import type { ClienteFormValues, RegimenFiscalOption } from '@control-contable/utils'
 import { ClienteForm } from '@control-contable/ui'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useTransition } from 'react'
 
@@ -128,6 +129,7 @@ export function ClientesClient({
               <TableCell>RFC</TableCell>
               <TableCell>Correo</TableCell>
               <TableCell>Estado</TableCell>
+              <TableCell>Detalle</TableCell>
               {canManage ? <TableCell>Acciones</TableCell> : null}
             </TableRow>
           </TableHead>
@@ -138,6 +140,11 @@ export function ClientesClient({
                 <TableCell>{cliente.rfc}</TableCell>
                 <TableCell>{cliente.correo}</TableCell>
                 <TableCell>{cliente.estado === 'activo' ? 'Activo' : 'Inactivo'}</TableCell>
+                <TableCell>
+                  <Button size="small" component={Link} href={`/clientes/${cliente.id}`}>
+                    Ver detalle
+                  </Button>
+                </TableCell>
                 {canManage ? (
                   <TableCell>
                     <Box sx={{ display: 'flex', gap: 1 }}>

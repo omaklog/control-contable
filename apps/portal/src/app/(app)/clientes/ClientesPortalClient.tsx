@@ -15,6 +15,7 @@ import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useTransition } from 'react'
 
@@ -150,6 +151,7 @@ export function ClientesPortalClient({
               <TableCell>RFC</TableCell>
               <TableCell>Correo</TableCell>
               <TableCell>Estado</TableCell>
+              <TableCell>Detalle</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -159,6 +161,11 @@ export function ClientesPortalClient({
                 <TableCell>{cliente.rfc}</TableCell>
                 <TableCell>{cliente.correo}</TableCell>
                 <TableCell>{cliente.estado === 'activo' ? 'Activo' : 'Inactivo'}</TableCell>
+                <TableCell>
+                  <Button size="small" component={Link} href={`/clientes/${cliente.id}`}>
+                    Ver detalle
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

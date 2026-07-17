@@ -9,3 +9,8 @@ export {
   type RegimenFiscalOption,
 } from './clienteForm'
 export { calcularTotalPaginas } from './paginacion'
+export {
+  contactoFormSchema,
+  mapearErrorContactoAMensaje,
+  type ContactoFormValues,
+} from './contactoForm'
