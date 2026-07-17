@@ -78,10 +78,12 @@ El sistema debe priorizar la seguridad, confiabilidad y facilidad de mantenimien
     Los módulos principales serán:
 
     Clientes
-    Cobranza
-    Expedientes Digitales
-    Recibos de Honorarios
-    Reportes
+    Servicios
+    Cobranza (incluye Recibos de Honorarios)
+    Gestión Fiscal (Obligaciones y Periodos Fiscales)
+    Gestión Documental Fiscal (Expedientes Digitales)
+    Notificaciones
+    Reportes y Analítica
     Usuarios
     Auditoría
     Configuración
@@ -154,6 +156,8 @@ El sistema debe priorizar la seguridad, confiabilidad y facilidad de mantenimien
     Formularios consistentes.
     Las validaciones de los formularios deberán implementarse mediante Yup y Formik.
     Confirmaciones para operaciones críticas.
+    The project UI implementation must follow the UX guidelines defined in:
+    /docs/ux/design.md
 
 ### Reportes
 
