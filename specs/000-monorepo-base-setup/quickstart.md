@@ -1,6 +1,6 @@
 # Quickstart: Validación de la Infraestructura Base
 
-**Feature**: 001-monorepo-base-setup | **Date**: 2026-07-13
+**Feature**: 000-monorepo-base-setup | **Date**: 2026-07-13
 
 Esta guía describe cómo validar que la infraestructura base del monorepo funciona correctamente end-to-end, sin documentar la implementación en detalle.
 

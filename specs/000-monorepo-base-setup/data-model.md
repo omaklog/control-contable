@@ -1,6 +1,6 @@
 # Data Model: Infraestructura Base del Monorepo
 
-**Feature**: 001-monorepo-base-setup | **Date**: 2026-07-13
+**Feature**: 000-monorepo-base-setup | **Date**: 2026-07-13
 
 Esta feature es de infraestructura. No define entidades de base de datos. El "modelo de datos" aquí documenta el **grafo de dependencias de paquetes** del monorepo y las **configuraciones compartidas** como entidades de primer orden.
 

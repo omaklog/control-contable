@@ -1,6 +1,6 @@
 # Research: Infraestructura Base del Monorepo
 
-**Feature**: 001-monorepo-base-setup | **Date**: 2026-07-13
+**Feature**: 000-monorepo-base-setup | **Date**: 2026-07-13
 
 ---
 

@@ -1,8 +1,8 @@
 # Implementation Plan: Infraestructura Base del Monorepo
 
-**Branch**: `001-monorepo-base-setup` | **Date**: 2026-07-13 | **Spec**: [spec.md](./spec.md)
+**Branch**: `000-monorepo-base-setup` | **Date**: 2026-07-13 | **Spec**: [spec.md](./spec.md)
 
-**Input**: Feature specification from `specs/001-monorepo-base-setup/spec.md`
+**Input**: Feature specification from `specs/000-monorepo-base-setup/spec.md`
 
 ## Summary
 
@@ -73,7 +73,7 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 ### Documentation (this feature)
 
 ```text
-specs/001-monorepo-base-setup/
+specs/000-monorepo-base-setup/
 ├── plan.md              # Este archivo
 ├── research.md          # Phase 0 — decisiones técnicas y alternativas
 ├── data-model.md        # Phase 1 — grafo de paquetes y contratos de dependencia

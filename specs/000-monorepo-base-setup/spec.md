@@ -1,6 +1,6 @@
 # Feature Specification: Infraestructura Base del Monorepo
 
-**Feature Branch**: `001-monorepo-base-setup`
+**Feature Branch**: `000-monorepo-base-setup`
 
 **Created**: 2026-07-13
 

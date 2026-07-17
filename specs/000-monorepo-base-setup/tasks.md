@@ -1,6 +1,6 @@
 # Tasks: Infraestructura Base del Monorepo
 
-**Input**: Design documents from `specs/001-monorepo-base-setup/`
+**Input**: Design documents from `specs/000-monorepo-base-setup/`
 
 **Prerequisites**: plan.md ✅ | spec.md ✅ | research.md ✅ | data-model.md ✅ | contracts/ ✅
 
@@ -154,7 +154,7 @@
 - [x] T062 [P] Create root `README.md` with: project overview, prerequisites (Node 20, pnpm 9, Docker, Supabase CLI), setup commands (`pnpm install`, `supabase start`, copy .env.local.example, `pnpm dev`), available scripts reference, and monorepo structure diagram
 - [x] T063 [P] Add `.nvmrc` file at repo root with content `20` for Node version pinning (works with nvm and fnm)
 - [x] T064 [P] Create `docker-compose.yml` at repo root as optional orchestration reference (documents the Supabase ports in Docker terms for teams that prefer docker-compose commands over supabase CLI directly)
-- [x] T065 Run complete quickstart.md validation: execute all 8 scenarios documented in `specs/001-monorepo-base-setup/quickstart.md` and confirm all pass
+- [x] T065 Run complete quickstart.md validation: execute all 8 scenarios documented in `specs/000-monorepo-base-setup/quickstart.md` and confirm all pass
 - [x] T066 [P] Add `turbo.json` remote caching configuration stub (commented out) documenting how to enable Vercel Remote Cache or self-hosted cache for CI speedup in the future
 - [x] T067 Verify Turborepo build cache works: run `pnpm build` twice and confirm second run uses cache (output shows `>>> FULL TURBO` cache hit indicators)
 
