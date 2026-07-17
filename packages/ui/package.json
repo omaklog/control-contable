@@ -9,22 +9,28 @@
   },
   "scripts": {
     "lint": "eslint src --max-warnings 0",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
   },
   "peerDependencies": {
+    "@control-contable/auth": "workspace:*",
     "@emotion/react": "^11",
     "@emotion/styled": "^11",
     "@mui/icons-material": "^6",
     "@mui/material": "^6",
     "formik": "^2.4.6",
+    "next": "^15.1.6",
     "react": "^19",
     "react-dom": "^19",
     "yup": "^1.6.1"
   },
   "dependencies": {
-    "@control-contable/types": "workspace:*"
+    "@control-contable/supabase-client": "workspace:*",
+    "@control-contable/types": "workspace:*",
+    "@control-contable/utils": "workspace:*"
   },
   "devDependencies": {
+    "@control-contable/auth": "workspace:*",
     "@control-contable/config": "workspace:*",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
@@ -33,9 +39,11 @@
     "@types/react": "^19.0.4",
     "@types/react-dom": "^19.0.2",
     "formik": "^2.4.6",
+    "next": "^15.1.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "typescript": "^5.7.3",
+    "vitest": "^3.0.4",
     "yup": "^1.6.1"
   }
 }

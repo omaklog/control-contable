@@ -152,6 +152,7 @@ El sistema debe priorizar la seguridad, confiabilidad y facilidad de mantenimien
     Responsive.
     Accesibilidad.
     Formularios consistentes.
+    Las validaciones de los formularios deberán implementarse mediante Yup y Formik.
     Confirmaciones para operaciones críticas.
 
 ### Reportes

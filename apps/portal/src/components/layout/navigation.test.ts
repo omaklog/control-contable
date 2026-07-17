@@ -1,41 +1,21 @@
-import type { Capability } from '@control-contable/auth'
 import { describe, expect, it } from 'vitest'
 
-import { type MenuItem, visibleMenuItems } from './navigation'
+import { MENU_ITEMS } from './navigation'
 
-const HOME: MenuItem = { label: 'Inicio', href: '/', icon: () => null, implemented: true }
-const RESTRICTED: MenuItem = {
-  label: 'Reservado',
-  href: '/reservado',
-  icon: () => null,
-  capability: 'manage_users' as Capability,
-  implemented: false,
-}
-
-describe('visibleMenuItems', () => {
-  it('sin capability asignada, la entrada es visible sin importar las capacidades del usuario', () => {
-    expect(visibleMenuItems([HOME], [])).toEqual([HOME])
-    expect(visibleMenuItems([HOME], ['manage_users'])).toEqual([HOME])
+describe('MENU_ITEMS (apps/portal)', () => {
+  it('incluye "Inicio" ya implementado', () => {
+    const inicio = MENU_ITEMS.find((item) => item.label === 'Inicio')
+    expect(inicio?.implemented).toBe(true)
   })
 
-  it('una entrada con capability solo es visible si esa capacidad está en las capacidades recibidas', () => {
-    expect(visibleMenuItems([RESTRICTED], [])).toEqual([])
-    expect(visibleMenuItems([RESTRICTED], ['view_auth_audit_log'])).toEqual([])
-    expect(visibleMenuItems([RESTRICTED], ['manage_users'])).toEqual([RESTRICTED])
+  it('incluye "Clientes" ya implementado (007-alta-cliente-portal), restringido a manage_clients', () => {
+    const clientes = MENU_ITEMS.find((item) => item.label === 'Clientes')
+    expect(clientes?.implemented).toBe(true)
+    expect(clientes?.capability).toBe('manage_clients')
   })
 
-  it('el campo implemented no afecta la visibilidad (solo se usa para deshabilitar en la UI)', () => {
-    const notImplementedNoCapability: MenuItem = {
-      ...HOME,
-      label: 'Próximamente',
-      implemented: false,
-    }
-    expect(visibleMenuItems([notImplementedNoCapability], [])).toEqual([notImplementedNoCapability])
-  })
-
-  it('filtra una lista mixta preservando el orden original', () => {
-    const result = visibleMenuItems([HOME, RESTRICTED], ['manage_users'])
-    expect(result).toEqual([HOME, RESTRICTED])
-    expect(visibleMenuItems([HOME, RESTRICTED], [])).toEqual([HOME])
+  it('no tiene hrefs duplicados', () => {
+    const hrefs = MENU_ITEMS.map((item) => item.href)
+    expect(new Set(hrefs).size).toBe(hrefs.length)
   })
 })

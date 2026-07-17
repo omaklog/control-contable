@@ -2,7 +2,6 @@
 
 import type { CurrentProfile } from '@control-contable/auth'
 import { createBrowserSupabaseClient } from '@control-contable/supabase-client/browser'
-import { Logo } from '@control-contable/ui'
 import MenuIcon from '@mui/icons-material/Menu'
 import AppBar from '@mui/material/AppBar'
 import Avatar from '@mui/material/Avatar'
@@ -16,7 +15,7 @@ import ListItemButton from '@mui/material/ListItemButton'
 import ListItemIcon from '@mui/material/ListItemIcon'
 import ListItemText from '@mui/material/ListItemText'
 import Menu from '@mui/material/Menu'
-import MenuItem from '@mui/material/MenuItem'
+import MenuItemButton from '@mui/material/MenuItem'
 import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
 import useMediaQuery from '@mui/material/useMediaQuery'
@@ -25,11 +24,12 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { type MouseEvent, type ReactNode, useState } from 'react'
 
-import { visibleMenuItems, MENU_ITEMS } from './navigation'
+import { Logo } from './Logo'
+import { visibleMenuItems, type MenuItem } from './navigation'
 
 const DRAWER_WIDTH = 240
 
-/** Iniciales del avatar: de fullName si existe, si no la primera letra del correo (FR-002, research.md #4). */
+/** Iniciales del avatar: de fullName si existe, si no la primera letra del correo (004-portal-main-layout, FR-002, research.md #4). */
 function getInitials(profile: CurrentProfile): string {
   if (profile.fullName) {
     const parts = profile.fullName.trim().split(/\s+/).filter(Boolean)
@@ -42,11 +42,24 @@ function getInitials(profile: CurrentProfile): string {
   return profile.email ? profile.email[0]!.toUpperCase() : '?'
 }
 
+/**
+ * Layout principal compartido por apps/portal y apps/admin
+ * (004-portal-main-layout, FR-010): AppBar + Drawer con menú de navegación,
+ * avatar de perfil y cierre de sesión. Cada app define su propio title y su
+ * propia lista de menuItems en components/layout/navigation.ts.
+ */
 export function MainLayoutClient({
   profile,
+  title,
+  menuItems,
+  loginPath = '/login',
   children,
 }: {
   profile: CurrentProfile
+  title: string
+  menuItems: MenuItem[]
+  /** Ruta de inicio de sesión a la que redirigir tras cerrar sesión (default: /login). */
+  loginPath?: string
   children: ReactNode
 }) {
   const theme = useTheme()
@@ -55,14 +68,14 @@ export function MainLayoutClient({
   const [avatarAnchor, setAvatarAnchor] = useState<HTMLElement | null>(null)
   const router = useRouter()
 
-  const items = visibleMenuItems(MENU_ITEMS, profile.capabilities)
+  const items = visibleMenuItems(menuItems, profile.capabilities)
 
-  /** Cierra la sesión de Supabase y redirige a /login (FR-003/FR-004, research.md #5). */
+  /** Cierra la sesión de Supabase y redirige a la pantalla de login de la app actual (FR-003/FR-004, research.md #5). */
   async function handleLogout() {
     setAvatarAnchor(null)
     const supabase = createBrowserSupabaseClient()
     await supabase.auth.signOut()
-    router.push('/login')
+    router.push(loginPath)
     router.refresh()
   }
 
@@ -83,7 +96,7 @@ export function MainLayoutClient({
             </ListItemIcon>
             <ListItemText
               primary={item.label}
-              secondary={item.implemented ? undefined : 'Próximamente'}
+              secondary={item.implemented ? undefined : (item.pendingLabel ?? 'Próximamente')}
             />
           </ListItemButton>
         )
@@ -107,7 +120,7 @@ export function MainLayoutClient({
           ) : null}
           <Logo size={32} />
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Portal de Control Contable
+            {title}
           </Typography>
           <IconButton
             onClick={(event: MouseEvent<HTMLElement>) => setAvatarAnchor(event.currentTarget)}
@@ -125,7 +138,7 @@ export function MainLayoutClient({
               <Chip label={profile.role} size="small" sx={{ mt: 0.5 }} />
             </Box>
             <Divider />
-            <MenuItem onClick={handleLogout}>Cerrar sesión</MenuItem>
+            <MenuItemButton onClick={handleLogout}>Cerrar sesión</MenuItemButton>
           </Menu>
         </Toolbar>
       </AppBar>

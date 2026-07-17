@@ -13,7 +13,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@control-contable/types": "workspace:*"
+    "@control-contable/types": "workspace:*",
+    "yup": "^1.6.1"
   },
   "devDependencies": {
     "@control-contable/config": "workspace:*",

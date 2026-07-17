@@ -252,10 +252,19 @@ importers:
 
   packages/ui:
     dependencies:
+      '@control-contable/supabase-client':
+        specifier: workspace:*
+        version: link:../supabase-client
       '@control-contable/types':
         specifier: workspace:*
         version: link:../types
+      '@control-contable/utils':
+        specifier: workspace:*
+        version: link:../utils
     devDependencies:
+      '@control-contable/auth':
+        specifier: workspace:*
+        version: link:../auth
       '@control-contable/config':
         specifier: workspace:*
         version: link:../config
@@ -280,6 +289,9 @@ importers:
       formik:
         specifier: ^2.4.6
         version: 2.4.9(@types/react@19.2.17)(react@19.2.7)
+      next:
+        specifier: ^15.1.6
+        version: 15.5.20(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       react:
         specifier: ^19.0.0
         version: 19.2.7
@@ -289,6 +301,9 @@ importers:
       typescript:
         specifier: ^5.7.3
         version: 5.9.3
+      vitest:
+        specifier: ^3.0.4
+        version: 3.2.7(@types/node@22.20.1)(yaml@2.9.0)
       yup:
         specifier: ^1.6.1
         version: 1.7.1
@@ -298,6 +313,9 @@ importers:
       '@control-contable/types':
         specifier: workspace:*
         version: link:../types
+      yup:
+        specifier: ^1.6.1
+        version: 1.7.1
     devDependencies:
       '@control-contable/config':
         specifier: workspace:*
