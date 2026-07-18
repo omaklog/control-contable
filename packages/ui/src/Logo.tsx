@@ -1,3 +1,7 @@
+'use client'
+
+import { useTheme } from '@mui/material/styles'
+
 /**
  * Marcador de posición para el logotipo real del despacho (FR-017,
  * specs/003-supabase-auth-roles). Un SVG simple renderizado directamente —
@@ -8,6 +12,8 @@
  * componente.
  */
 export function Logo({ size = 40 }: { size?: number }) {
+  const theme = useTheme()
+
   return (
     <svg
       width={size}
@@ -16,14 +22,14 @@ export function Logo({ size = 40 }: { size?: number }) {
       role="img"
       aria-label="Logotipo del despacho"
     >
-      <rect width="40" height="40" rx="8" fill="#1565c0" />
+      <rect width="40" height="40" rx="8" fill={theme.palette.primary.main} />
       <text
         x="20"
         y="26"
         textAnchor="middle"
         fontSize="15"
         fontWeight="700"
-        fill="#ffffff"
+        fill={theme.palette.primary.contrastText}
         fontFamily="sans-serif"
       >
         CC
