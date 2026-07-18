@@ -1,7 +1,7 @@
 import type { Capability } from '@control-contable/auth'
 import { describe, expect, it } from 'vitest'
 
-import { type MenuItem, visibleMenuItems } from './navigation'
+import { isActiveMenuItem, type MenuItem, visibleMenuItems } from './navigation'
 
 const HOME: MenuItem = { label: 'Inicio', href: '/', icon: () => null, implemented: true }
 const RESTRICTED: MenuItem = {
@@ -37,5 +37,28 @@ describe('visibleMenuItems (004-portal-main-layout, compartido por apps/portal y
     const result = visibleMenuItems([HOME, RESTRICTED], ['manage_users'])
     expect(result).toEqual([HOME, RESTRICTED])
     expect(visibleMenuItems([HOME, RESTRICTED], [])).toEqual([HOME])
+  })
+})
+
+describe('isActiveMenuItem (004-portal-main-layout, FR-011/FR-012, research.md #7)', () => {
+  it('"/" solo es activo en coincidencia exacta', () => {
+    expect(isActiveMenuItem('/', '/')).toBe(true)
+    expect(isActiveMenuItem('/clientes', '/')).toBe(false)
+  })
+
+  it('un ítem con href distinto de "/" es activo en coincidencia exacta', () => {
+    expect(isActiveMenuItem('/clientes', '/clientes')).toBe(true)
+  })
+
+  it('un ítem con href distinto de "/" es activo en cualquier subruta', () => {
+    expect(isActiveMenuItem('/clientes/123', '/clientes')).toBe(true)
+  })
+
+  it('no es activo si la ruta no coincide ni es subruta', () => {
+    expect(isActiveMenuItem('/cobranza', '/clientes')).toBe(false)
+  })
+
+  it('no es activo por coincidencia parcial de segmento (evita falsos positivos como /clientes-viejos)', () => {
+    expect(isActiveMenuItem('/clientes-viejos', '/clientes')).toBe(false)
   })
 })

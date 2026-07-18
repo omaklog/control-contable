@@ -1,8 +1,10 @@
-# Contrato: menú de navegación de `apps/portal`
+# Contrato: menú de navegación (`packages/ui` + `MENU_ITEMS` por app)
 
 **Feature**: [../spec.md](../spec.md) | **Data model**: [../data-model.md](../data-model.md)
 
-Definido en `apps/portal/src/components/layout/navigation.ts`. No es una API pública consumida fuera de `apps/portal` — se documenta aquí porque es la superficie que cualquier módulo de negocio futuro deberá extender para aparecer en el menú.
+`MenuItem`/`visibleMenuItems` viven en `packages/ui/src/navigation.ts`, compartidos por `apps/portal` y `apps/admin` (FR-010). Cada app define su propio arreglo `MENU_ITEMS` en `apps/{portal,admin}/src/components/layout/navigation.ts` — no es una API pública consumida fuera del monorepo, pero sí la superficie que cualquier módulo de negocio futuro deberá extender para aparecer en el menú de su app.
+
+**Contenido vigente de `apps/portal/.../navigation.ts`** (FR-006/FR-007, actualizado 2026-07-17): Inicio (implementado), Clientes (implementado, `capability: 'manage_clients'`), Cobranza (`capability: 'view_billing'`, `implemented: false`), Documentos Fiscales (`capability: 'view_documents'`, `implemented: false`), Obligaciones Fiscales (sin `capability`, `implemented: false`). `apps/admin/.../navigation.ts` no cambia (Inicio, Usuarios, Clientes, Auditoría — ya implementados).
 
 ```ts
 export interface MenuItem {
@@ -11,6 +13,8 @@ export interface MenuItem {
   icon: React.ComponentType
   capability?: Capability
   implemented: boolean
+  /** Texto alternativo a "Próximamente" cuando implemented=false (006-crud-clientes-admin, FR-017). */
+  pendingLabel?: string
 }
 
 export const MENU_ITEMS: MenuItem[]

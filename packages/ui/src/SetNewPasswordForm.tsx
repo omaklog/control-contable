@@ -45,6 +45,7 @@ export function SetNewPasswordForm({ title, onSubmit, onSuccess }: SetNewPasswor
   return (
     <Box
       component="form"
+      method="post"
       onSubmit={formik.handleSubmit}
       noValidate
       sx={{ display: 'flex', flexDirection: 'column', gap: 2, maxWidth: 360, mx: 'auto', mt: 8 }}

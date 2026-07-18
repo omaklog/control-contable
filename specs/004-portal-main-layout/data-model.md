@@ -16,7 +16,7 @@ El resto de `CurrentProfile` (`id`, `role`, `isActive`, `fullName`, `mustChangeP
 
 ## `MenuItem` (estructura de código, no persistida)
 
-Vive en `apps/portal/src/components/layout/navigation.ts` como un arreglo estático (`MENU_ITEMS`), no en base de datos — ver research.md #3.
+El tipo `MenuItem` y la función `visibleMenuItems` viven en `packages/ui/src/navigation.ts` (compartidos por ambas apps, FR-010). Cada app define su propio arreglo estático `MENU_ITEMS` — no en base de datos (ver research.md #3) — en `apps/portal/src/components/layout/navigation.ts` y `apps/admin/src/components/layout/navigation.ts` respectivamente; ambos usan la misma forma de `MenuItem`.
 
 | Campo         | Tipo                      | Notas                                                                                                                                                                 |
 | ------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

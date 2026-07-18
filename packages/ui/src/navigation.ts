@@ -23,3 +23,15 @@ export interface MenuItem {
 export function visibleMenuItems(items: MenuItem[], capabilities: Capability[]): MenuItem[] {
   return items.filter((item) => !item.capability || capabilities.includes(item.capability))
 }
+
+/**
+ * Determina si `href` corresponde a la ruta actualmente activa (004-portal-main-layout,
+ * FR-011/FR-012, research.md #7). Coincidencia exacta para `/` (Inicio) — evita que
+ * cualquier ruta lo marque como activo por ser prefijo trivial de todas—; por prefijo
+ * para el resto, de forma que subrutas (p. ej. `/clientes/[id]`) también activen la
+ * entrada de menú de su módulo padre.
+ */
+export function isActiveMenuItem(pathname: string, href: string): boolean {
+  if (href === '/') return pathname === '/'
+  return pathname === href || pathname.startsWith(`${href}/`)
+}

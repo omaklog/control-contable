@@ -21,11 +21,11 @@ import Typography from '@mui/material/Typography'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import { useTheme } from '@mui/material/styles'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { type MouseEvent, type ReactNode, useState } from 'react'
 
 import { Logo } from './Logo'
-import { visibleMenuItems, type MenuItem } from './navigation'
+import { isActiveMenuItem, visibleMenuItems, type MenuItem } from './navigation'
 
 const DRAWER_WIDTH = 240
 
@@ -67,6 +67,7 @@ export function MainLayoutClient({
   const [mobileOpen, setMobileOpen] = useState(false)
   const [avatarAnchor, setAvatarAnchor] = useState<HTMLElement | null>(null)
   const router = useRouter()
+  const pathname = usePathname()
 
   const items = visibleMenuItems(menuItems, profile.capabilities)
 
@@ -83,6 +84,7 @@ export function MainLayoutClient({
     <List>
       {items.map((item) => {
         const Icon = item.icon
+        const isActive = isActiveMenuItem(pathname, item.href)
         return (
           <ListItemButton
             key={item.href}
@@ -90,6 +92,22 @@ export function MainLayoutClient({
             href={item.implemented ? item.href : undefined}
             disabled={!item.implemented}
             onClick={() => setMobileOpen(false)}
+            aria-current={isActive ? 'page' : undefined}
+            sx={{
+              borderLeft: '4px solid',
+              borderLeftColor: isActive ? 'secondary.main' : 'transparent',
+              bgcolor: isActive ? 'action.selected' : 'transparent',
+              '& .MuiListItemIcon-root': { color: isActive ? 'secondary.main' : 'inherit' },
+              '& .MuiListItemText-primary': {
+                color: isActive ? 'secondary.main' : 'inherit',
+                fontWeight: isActive ? 600 : 400,
+              },
+              '&.Mui-focusVisible': {
+                outline: '2px solid',
+                outlineColor: 'secondary.main',
+                outlineOffset: 2,
+              },
+            }}
           >
             <ListItemIcon>
               <Icon />

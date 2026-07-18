@@ -14,6 +14,38 @@ describe('MENU_ITEMS (apps/portal)', () => {
     expect(clientes?.capability).toBe('manage_clients')
   })
 
+  it('tiene exactamente 5 entradas, alineadas a docs/ux/design-system.md §2.2', () => {
+    expect(MENU_ITEMS.map((item) => item.label)).toEqual([
+      'Inicio',
+      'Clientes',
+      'Cobranza',
+      'Documentos Fiscales',
+      'Obligaciones Fiscales',
+    ])
+  })
+
+  it('"Cobranza" y "Documentos Fiscales" reusan capacidades existentes de packages/auth (FR-007)', () => {
+    const cobranza = MENU_ITEMS.find((item) => item.label === 'Cobranza')
+    const documentosFiscales = MENU_ITEMS.find((item) => item.label === 'Documentos Fiscales')
+    expect(cobranza?.capability).toBe('view_billing')
+    expect(cobranza?.implemented).toBe(false)
+    expect(documentosFiscales?.capability).toBe('view_documents')
+    expect(documentosFiscales?.implemented).toBe(false)
+  })
+
+  it('"Obligaciones Fiscales" no tiene capacidad todavía (módulo sin especificar)', () => {
+    const obligacionesFiscales = MENU_ITEMS.find((item) => item.label === 'Obligaciones Fiscales')
+    expect(obligacionesFiscales?.capability).toBeUndefined()
+    expect(obligacionesFiscales?.implemented).toBe(false)
+  })
+
+  it('no conserva las entradas ya superadas (Expedientes Digitales/Recibos de Honorarios/Reportes)', () => {
+    const labels = MENU_ITEMS.map((item) => item.label)
+    expect(labels).not.toContain('Expedientes Digitales')
+    expect(labels).not.toContain('Recibos de Honorarios')
+    expect(labels).not.toContain('Reportes')
+  })
+
   it('no tiene hrefs duplicados', () => {
     const hrefs = MENU_ITEMS.map((item) => item.href)
     expect(new Set(hrefs).size).toBe(hrefs.length)

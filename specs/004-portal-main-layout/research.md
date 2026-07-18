@@ -38,6 +38,20 @@
 - **Rationale**: Es el patrón documentado y ya usado en incontables aplicaciones MUI; `@mui/material` ya está presente en el monorepo, sin necesitar una librería adicional.
 - **Alternatives considered**: Comportamiento responsive hecho a mano con media queries CSS propias — rechazado, reinventa algo que MUI ya resuelve de forma accesible y probada (constitución: "Accesibilidad").
 
+## 7. Detección de la ruta activa para resaltar el ítem de menú (FR-011/FR-012, 2026-07-17)
+
+- **Decision**: Usar `usePathname()` de `next/navigation` dentro de `MainLayoutClient` (ya es Client Component). Regla de coincidencia: exacta para `href === '/'` (Inicio) — evita que cualquier ruta lo marque como activo por ser prefijo trivial de todas; por prefijo (`pathname === item.href || pathname.startsWith(item.href + '/')`) para el resto, de forma que subrutas futuras (p. ej. `/clientes/[id]`) también activen la entrada padre "Clientes".
+- **Rationale**: Patrón estándar de Next.js App Router para resaltar el ítem de nav activo, sin estado ni props adicionales por página. Sin el matching por prefijo, el detalle de un cliente (`008-contactos-y-detalle-cliente`, `/clientes/[id]`) no resaltaría "Clientes" en el menú.
+- **Alternatives considered**: Un prop explícito `activeHref` pasado por cada página — rechazado, obligaría a que cada `page.tsx` futura declarara manualmente su ítem activo, duplicando información que ya vive en la URL; `usePathname()` centraliza la lógica en el layout compartido sin tocar páginas ni requerir cambios cuando se agreguen rutas nuevas.
+
+## 8. Señal de accesibilidad del ítem activo (FR-012, 2026-07-17)
+
+- **Decision**: En el `ListItemButton` del ítem activo, agregar `aria-current="page"`. En todos los `ListItemButton` del menú (activos o no), agregar un estilo `sx` explícito para `&.Mui-focusVisible` (anillo de 2px usando `secondary.main` como color de acento, offset visible) en vez de depender únicamente del overlay de foco por defecto de MUI.
+- **Rationale**: Cumple FR-012 (Constitución "UI: Accesibilidad"; `docs/ux/design-system.md` §7) sin requerir el `ThemeProvider` compartido que `docs/ux/design-system.md` §10 (nota #2) ya deja diferido — es un estilo puntual del componente de layout, no un cambio de tema global. `secondary.main` es el color de acento ya decidido en `design-system.md` §1.1, así que el estilo puntual no colisiona con el futuro tema compartido; puede migrarse a él sin romper el contrato cuando ese trabajo se planifique.
+- **Alternatives considered**: Esperar al `ThemeProvider` compartido de `packages/ui` para definir el foco de forma global — rechazado por ahora: bloquearía FR-012 (ya parte del alcance aprobado de esta feature) detrás de un trabajo de theming no planificado todavía.
+
 ## Resumen de NEEDS CLARIFICATION resueltos
 
 No quedaban marcadores `[NEEDS CLARIFICATION]` en `spec.md` al iniciar esta fase — se resolvieron durante `/speckit-specify` (contenido del menú y filtrado por rol, ver `spec.md` FR-006/FR-007). Todas las decisiones anteriores son de diseño técnico dentro del alcance ya definido por `spec.md` y la constitución del proyecto.
+
+**Actualización 2026-07-17**: la sesión de `/speckit-clarify` de esa fecha no dejó ningún marcador `[NEEDS CLARIFICATION]` pendiente tampoco — la única ambigüedad detectada (accesibilidad del ítem activo, FR-011) se resolvió en la misma sesión (ver `spec.md`, Clarifications) y se investigó arriba (#7, #8). La decisión #3 (contenido de `MENU_ITEMS`) queda desactualizada en su lista literal de módulos — no se reescribe para preservar el historial de la decisión original, pero el contenido vigente es el de `spec.md` FR-006 (Cobranza, Documentos Fiscales, Obligaciones Fiscales).
