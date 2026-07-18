@@ -68,7 +68,11 @@ export async function updateContacto(
 /**
  * Cambia únicamente el estado (activo/obsoleto) de un Contacto — nunca
  * ejecuta un DELETE físico. Idempotente: invocarla dos veces con el mismo
- * estado no produce error.
+ * estado no produce error. Al marcar como obsoleto, también retira la marca
+ * de "principal" si la tuviera (008-contactos-y-detalle-cliente, Edge Cases:
+ * "el Cliente queda temporalmente sin contacto principal marcado, hasta que
+ * se designe uno nuevo") — reactivar un Contacto nunca restaura esa marca
+ * automáticamente, el personal debe designar uno nuevo si lo requiere.
  */
 export async function setContactoEstado(
   clienteId: string,
@@ -78,7 +82,10 @@ export async function setContactoEstado(
   await requireCapability('manage_clients')
   const supabase = await createServerSupabaseClient()
 
-  const { error } = await supabase.from('contactos').update({ estado }).eq('id', contactoId)
+  const { error } = await supabase
+    .from('contactos')
+    .update(estado === 'obsoleto' ? { estado, es_principal: false } : { estado })
+    .eq('id', contactoId)
 
   if (error) {
     return { error: mapearErrorContactoAMensaje(error) }

@@ -154,3 +154,11 @@
 - Esta feature modifica el esquema de `contactos` (agrega `estado`, `es_principal`) pero no toca `clientes` ni `regimenes_fiscales`.
 - A diferencia de `006`→`007` (promoción posterior), `ContactoForm` y `ClienteDetalleClient` se construyen compartidos desde esta primera iteración porque ambos consumidores (`apps/admin`, `apps/portal`) son conocidos desde el inicio (research.md Decisión 1).
 - No se agrega auditoría (`business_audit_log`) para Contactos en esta feature (spec.md, Assumptions).
+
+## Bugfix (2026-07-18, detectado al refinar `005-clientes-cobranza-expedientes`)
+
+**Motivo**: `spec.md` Edge Cases ya documentaba, desde la redacción original, que "si el único contacto principal de un Cliente se marca como obsoleto, el Cliente queda temporalmente sin contacto principal marcado" — pero `setContactoEstado` (T018/T019) nunca implementó esa parte: solo actualizaba `estado`, sin tocar `es_principal`. Un contacto podía quedar marcado como obsoleto y seguir apareciendo como "principal" indefinidamente.
+
+- [x] T028 [P] Corregido `setContactoEstado` en `apps/admin/src/app/(app)/clientes/[clienteId]/actions.ts`: al marcar `estado: 'obsoleto'`, el `UPDATE` también establece `es_principal: false` en la misma llamada; reactivar (`estado: 'activo'`) no restaura `es_principal` automáticamente (el personal debe designar uno nuevo si lo requiere, consistente con el edge case original)
+- [x] T029 [P] Misma corrección en `apps/portal/src/app/(app)/clientes/[clienteId]/actions.ts` (código duplicado entre apps, no compartido — ver Notes)
+- [x] T030 Verificado `pnpm type-check`/`lint` limpios en `apps/admin` y `apps/portal` tras T028/T029
