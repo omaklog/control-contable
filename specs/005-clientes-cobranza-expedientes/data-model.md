@@ -182,7 +182,7 @@ Nunca se ejecuta `DELETE` sobre esta tabla; el reemplazo marca la fila anterior 
 | `detalle`    | `jsonb`       | nullable — snapshot de campos relevantes                                |
 | `creado_en`  | `timestamptz` | not null, default `now()`                                               |
 
-Poblada exclusivamente por triggers `AFTER INSERT/UPDATE/DELETE` (Decisión 5, FR-018). Tabla append-only: sin `UPDATE`/`DELETE` permitidos vía RLS.
+Poblada exclusivamente por triggers `AFTER INSERT/UPDATE/DELETE` (Decisión 5, FR-018). Tabla append-only: sin `UPDATE`/`DELETE` permitidos vía RLS. `SELECT` disponible para todo el personal con `view_clients` o `manage_clients` (migración `20260718100000_business_audit_log_select_staff.sql`, corregido 2026-07-18 desde una política original que restringía a solo Administrador — ver `contracts/db-functions-rls.md`).
 
 **Nota (2026-07-18, `spec.md` Assumptions)**: `entidad` es `text` sin `enum`/`check` por diseño — es un facilitador para dominios futuros: auditar una entidad nueva (Servicio, Obligación Fiscal, Notificación) no requiere una migración de esquema, solo un nuevo trigger que inserte en esta misma tabla.
 

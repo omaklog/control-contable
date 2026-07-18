@@ -210,3 +210,12 @@ Task: "Prueba de integración de Contactos en packages/utils/src/contactos.integ
 - **Quickstart**: los 4 escenarios de `quickstart.md` se validaron manualmente contra Supabase local además de las pruebas automatizadas (Escenario 1: RFC único + régimen fiscal incompatible/vencido; Escenario 2: recibo automático + estado `pagado` + concepto inmutable; Escenario 3: PDF-only + versionado + `DELETE` bloqueado; Escenario 4: `business_audit_log` con filas para las 4 entidades y sus acciones).
 - **Datos de prueba**: limpiados por completo al finalizar (tablas de negocio vacías, usuarios `integration-*` eliminados de `auth.users`).
 - **Alcance no incluido** (según `plan.md`, Structure Decision): pantallas de captura de Clientes/Cobranza/Expedientes en `apps/admin`/`apps/portal` — quedan para features posteriores por módulo.
+
+## Bugfix (2026-07-18, detectado al refinar `007-alta-cliente-portal`)
+
+**Motivo**: la política RLS original de `business_audit_log` (`business_audit_log_select_admin_only`) restringía el `SELECT` exclusivamente a `is_administrador()`. Pero `docs/ux/design-system.md` §9.2 (Cliente 360, escrito después de esta feature) describe que la pestaña "Auditoría" de un cliente es visible para cualquier usuario que pueda ver ese cliente — incluido Auxiliar, en solo lectura — no solo Administrador. Sin este ajuste, Cliente 360 no podría implementarse tal como quedó documentado.
+
+- [x] T049 [P] Creada la migración `supabase/migrations/20260718100000_business_audit_log_select_staff.sql`: reemplaza `business_audit_log_select_admin_only` por `business_audit_log_select_staff`, usando `has_capability('view_clients') or has_capability('manage_clients')` (mismo gate ya usado por `clientes`/`contactos`) — aplicada contra Supabase local sin errores
+- [x] T050 [P] Prueba de integración nueva en `packages/utils/src/businessAuditLog.integration.test.ts`: un Auxiliar (solo `view_clients`) autenticado consulta `business_audit_log` filtrado por el cliente que acaba de crearse (vía `service_role`) y confirma que puede verlo — 1/1 pasando
+- [x] T051 Actualizados `contracts/db-functions-rls.md` y `data-model.md` para reflejar la política corregida — depende de T049
+- [x] T052 Verificado `pnpm type-check`/`lint` limpios en `packages/utils` tras T050 — depende de T050
