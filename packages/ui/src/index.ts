@@ -6,3 +6,10 @@ export { Logo } from './Logo'
 export { MainLayoutClient } from './MainLayoutClient'
 export { type MenuItem, visibleMenuItems } from './navigation'
 export { SetNewPasswordForm, type SetNewPasswordFormProps } from './SetNewPasswordForm'
+export { lightTheme, darkTheme, ColorModeProvider, useColorMode } from './theme'
+export {
+  StatusChip,
+  resolveStatusChipVariant,
+  type StatusChipProps,
+  type StatusChipVariant,
+} from './StatusChip'

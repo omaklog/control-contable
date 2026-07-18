@@ -1,6 +1,7 @@
 'use client'
 
 import type { AppRole, Capability } from '@control-contable/auth'
+import AddIcon from '@mui/icons-material/Add'
 import EditIcon from '@mui/icons-material/Edit'
 import LockResetIcon from '@mui/icons-material/LockReset'
 import ToggleOffIcon from '@mui/icons-material/ToggleOff'
@@ -17,6 +18,7 @@ import DialogTitle from '@mui/material/DialogTitle'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import IconButton from '@mui/material/IconButton'
 import MenuItem from '@mui/material/MenuItem'
+import Paper from '@mui/material/Paper'
 import Select, { type SelectChangeEvent } from '@mui/material/Select'
 import { alpha } from '@mui/material/styles'
 import Switch from '@mui/material/Switch'
@@ -192,12 +194,12 @@ export function UsuariosClient({
       {globalError ? <Alert severity="error">{globalError}</Alert> : null}
 
       <Box>
-        <Button variant="contained" onClick={() => setCreateOpen(true)}>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
           Crear cuenta
         </Button>
       </Box>
 
-      <Box>
+      <Paper sx={{ p: 3 }}>
         <Typography variant="h6" gutterBottom>
           Cuentas
         </Typography>
@@ -311,7 +313,7 @@ export function UsuariosClient({
             ))}
           </TableBody>
         </Table>
-      </Box>
+      </Paper>
 
       <Dialog open={createOpen} onClose={() => setCreateOpen(false)}>
         <DialogTitle>Crear cuenta</DialogTitle>

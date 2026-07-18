@@ -10,6 +10,7 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import FormControlLabel from '@mui/material/FormControlLabel'
+import IconButton from '@mui/material/IconButton'
 import Paper from '@mui/material/Paper'
 import Switch from '@mui/material/Switch'
 import Table from '@mui/material/Table'
@@ -17,11 +18,18 @@ import TableBody from '@mui/material/TableBody'
 import TableCell from '@mui/material/TableCell'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
+import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
+import AddIcon from '@mui/icons-material/Add'
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
+import StarOutlineIcon from '@mui/icons-material/StarOutline'
+import BlockIcon from '@mui/icons-material/Block'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 
 import { ContactoForm } from './ContactoForm'
+import { StatusChip } from './StatusChip'
 
 export interface ClienteDetalle {
   id: string
@@ -215,7 +223,9 @@ export function ClienteDetalleClient({
             <Typography variant="caption" color="text.secondary">
               Estado
             </Typography>
-            <Typography>{cliente.estado === 'activo' ? 'Activo' : 'Inactivo'}</Typography>
+            <Box sx={{ mt: 0.5 }}>
+              <StatusChip status={cliente.estado} />
+            </Box>
           </Box>
         </Box>
       </Paper>
@@ -249,7 +259,7 @@ export function ClienteDetalleClient({
               label="Mostrar obsoletos"
             />
             {canManage ? (
-              <Button variant="contained" onClick={abrirAlta}>
+              <Button variant="contained" startIcon={<AddIcon />} onClick={abrirAlta}>
                 Agregar contacto
               </Button>
             ) : null}
@@ -273,7 +283,7 @@ export function ClienteDetalleClient({
             </TableHead>
             <TableBody>
               {contactosVisibles.map((contacto) => (
-                <TableRow key={contacto.id}>
+                <TableRow key={contacto.id} hover>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       {contacto.nombre}
@@ -284,42 +294,64 @@ export function ClienteDetalleClient({
                   </TableCell>
                   <TableCell>{contacto.telefono}</TableCell>
                   <TableCell>{contacto.email ?? '—'}</TableCell>
-                  <TableCell>{contacto.estado === 'activo' ? 'Activo' : 'Obsoleto'}</TableCell>
+                  <TableCell>
+                    <StatusChip status={contacto.estado} />
+                  </TableCell>
                   {canManage ? (
                     <TableCell>
-                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                        <Button
-                          size="small"
-                          disabled={isPending}
-                          onClick={() => abrirEdicion(contacto)}
-                        >
-                          Editar
-                        </Button>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Tooltip title="Editar contacto">
+                          <span>
+                            <IconButton
+                              size="small"
+                              disabled={isPending}
+                              onClick={() => abrirEdicion(contacto)}
+                              aria-label="Editar contacto"
+                            >
+                              <EditOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
                         {contacto.estado === 'activo' ? (
-                          <Button
-                            size="small"
-                            color="error"
-                            disabled={isPending}
-                            onClick={() => setConfirmObsoletoId(contacto.id)}
-                          >
-                            Marcar obsoleto
-                          </Button>
+                          <Tooltip title="Marcar obsoleto">
+                            <span>
+                              <IconButton
+                                size="small"
+                                color="error"
+                                disabled={isPending}
+                                onClick={() => setConfirmObsoletoId(contacto.id)}
+                                aria-label="Marcar obsoleto"
+                              >
+                                <BlockIcon fontSize="small" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
                         ) : (
-                          <Button
-                            size="small"
-                            disabled={isPending}
-                            onClick={() => reactivar(contacto.id)}
-                          >
-                            Reactivar
-                          </Button>
+                          <Tooltip title="Reactivar">
+                            <span>
+                              <IconButton
+                                size="small"
+                                disabled={isPending}
+                                onClick={() => reactivar(contacto.id)}
+                                aria-label="Reactivar"
+                              >
+                                <CheckCircleOutlineIcon fontSize="small" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
                         )}
-                        <Button
-                          size="small"
-                          disabled={isPending || contacto.esPrincipal}
-                          onClick={() => marcarPrincipal(contacto.id)}
-                        >
-                          Marcar principal
-                        </Button>
+                        <Tooltip title="Marcar principal">
+                          <span>
+                            <IconButton
+                              size="small"
+                              disabled={isPending || contacto.esPrincipal}
+                              onClick={() => marcarPrincipal(contacto.id)}
+                              aria-label="Marcar principal"
+                            >
+                              <StarOutlineIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
                       </Box>
                     </TableCell>
                   ) : null}

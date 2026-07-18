@@ -9,6 +9,7 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Pagination from '@mui/material/Pagination'
+import Paper from '@mui/material/Paper'
 import Switch from '@mui/material/Switch'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
@@ -16,8 +17,13 @@ import TableCell from '@mui/material/TableCell'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
+import IconButton from '@mui/material/IconButton'
+import Tooltip from '@mui/material/Tooltip'
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import type { ClienteFormValues, RegimenFiscalOption } from '@control-contable/utils'
-import { ClienteForm } from '@control-contable/ui'
+import { ClienteForm, StatusChip } from '@control-contable/ui'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useTransition } from 'react'
@@ -107,78 +113,103 @@ export function ClientesClient({
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       {globalError ? <Alert severity="error">{globalError}</Alert> : null}
 
-      <FormControlLabel
-        control={
-          <Switch
-            checked={mostrarInactivos}
-            onChange={(event) => alternarMostrarInactivos(event.target.checked)}
-          />
-        }
-        label="Mostrar inactivos"
-      />
-
-      {clientes.length === 0 ? (
-        <Typography color="text.secondary">
-          No hay clientes {mostrarInactivos ? '' : 'activos '}registrados todavía.
-        </Typography>
-      ) : (
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Nombre</TableCell>
-              <TableCell>RFC</TableCell>
-              <TableCell>Correo</TableCell>
-              <TableCell>Estado</TableCell>
-              <TableCell>Detalle</TableCell>
-              {canManage ? <TableCell>Acciones</TableCell> : null}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {clientes.map((cliente) => (
-              <TableRow key={cliente.id}>
-                <TableCell>{cliente.nombre}</TableCell>
-                <TableCell>{cliente.rfc}</TableCell>
-                <TableCell>{cliente.correo}</TableCell>
-                <TableCell>{cliente.estado === 'activo' ? 'Activo' : 'Inactivo'}</TableCell>
-                <TableCell>
-                  <Button size="small" component={Link} href={`/clientes/${cliente.id}`}>
-                    Ver detalle
-                  </Button>
-                </TableCell>
-                {canManage ? (
-                  <TableCell>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <Button
-                        size="small"
-                        disabled={isPending}
-                        onClick={() => abrirEdicion(cliente)}
-                      >
-                        Editar
-                      </Button>
-                      <Button
-                        size="small"
-                        color="error"
-                        disabled={isPending || cliente.estado === 'inactivo'}
-                        onClick={() => setConfirmTargetId(cliente.id)}
-                      >
-                        Eliminar
-                      </Button>
-                    </Box>
-                  </TableCell>
-                ) : null}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
-
-      {totalPaginas > 1 ? (
-        <Pagination
-          count={totalPaginas}
-          page={paginaActual}
-          onChange={(_event, pagina) => irAPagina(pagina)}
+      <Paper sx={{ p: 3 }}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={mostrarInactivos}
+              onChange={(event) => alternarMostrarInactivos(event.target.checked)}
+            />
+          }
+          label="Mostrar inactivos"
+          sx={{ mb: 2 }}
         />
-      ) : null}
+
+        {clientes.length === 0 ? (
+          <Typography color="text.secondary">
+            No hay clientes {mostrarInactivos ? '' : 'activos '}registrados todavía.
+          </Typography>
+        ) : (
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Nombre</TableCell>
+                <TableCell>RFC</TableCell>
+                <TableCell>Correo</TableCell>
+                <TableCell>Estado</TableCell>
+                <TableCell>Detalle</TableCell>
+                {canManage ? <TableCell>Acciones</TableCell> : null}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {clientes.map((cliente) => (
+                <TableRow key={cliente.id} hover>
+                  <TableCell>{cliente.nombre}</TableCell>
+                  <TableCell>{cliente.rfc}</TableCell>
+                  <TableCell>{cliente.correo}</TableCell>
+                  <TableCell>
+                    <StatusChip status={cliente.estado} />
+                  </TableCell>
+                  <TableCell>
+                    <Tooltip title="Ver detalle">
+                      <span>
+                        <IconButton
+                          size="small"
+                          component={Link}
+                          href={`/clientes/${cliente.id}`}
+                          aria-label="Ver detalle"
+                        >
+                          <VisibilityOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  </TableCell>
+                  {canManage ? (
+                    <TableCell>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Tooltip title="Editar cliente">
+                          <span>
+                            <IconButton
+                              size="small"
+                              disabled={isPending}
+                              onClick={() => abrirEdicion(cliente)}
+                              aria-label="Editar cliente"
+                            >
+                              <EditOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                        <Tooltip title="Dar de baja">
+                          <span>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              disabled={isPending || cliente.estado === 'inactivo'}
+                              onClick={() => setConfirmTargetId(cliente.id)}
+                              aria-label="Dar de baja"
+                            >
+                              <DeleteOutlineIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      </Box>
+                    </TableCell>
+                  ) : null}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+
+        {totalPaginas > 1 ? (
+          <Pagination
+            count={totalPaginas}
+            page={paginaActual}
+            onChange={(_event, pagina) => irAPagina(pagina)}
+            sx={{ mt: 2 }}
+          />
+        ) : null}
+      </Paper>
 
       <ClienteForm
         open={Boolean(editTarget)}

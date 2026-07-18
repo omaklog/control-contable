@@ -2,6 +2,8 @@
 
 import type { CurrentProfile } from '@control-contable/auth'
 import { createBrowserSupabaseClient } from '@control-contable/supabase-client/browser'
+import DarkModeIcon from '@mui/icons-material/DarkMode'
+import LightModeIcon from '@mui/icons-material/LightMode'
 import MenuIcon from '@mui/icons-material/Menu'
 import AppBar from '@mui/material/AppBar'
 import Avatar from '@mui/material/Avatar'
@@ -17,6 +19,7 @@ import ListItemText from '@mui/material/ListItemText'
 import Menu from '@mui/material/Menu'
 import MenuItemButton from '@mui/material/MenuItem'
 import Toolbar from '@mui/material/Toolbar'
+import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import { useTheme } from '@mui/material/styles'
@@ -26,6 +29,7 @@ import { type MouseEvent, type ReactNode, useState } from 'react'
 
 import { Logo } from './Logo'
 import { isActiveMenuItem, visibleMenuItems, type MenuItem } from './navigation'
+import { useColorMode } from './theme'
 
 const DRAWER_WIDTH = 240
 
@@ -68,6 +72,7 @@ export function MainLayoutClient({
   const [avatarAnchor, setAvatarAnchor] = useState<HTMLElement | null>(null)
   const router = useRouter()
   const pathname = usePathname()
+  const { mode, toggleMode } = useColorMode()
 
   const items = visibleMenuItems(menuItems, profile.capabilities)
 
@@ -140,6 +145,15 @@ export function MainLayoutClient({
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             {title}
           </Typography>
+          <Tooltip title={mode === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}>
+            <IconButton
+              color="inherit"
+              onClick={toggleMode}
+              aria-label={mode === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+            >
+              {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+            </IconButton>
+          </Tooltip>
           <IconButton
             onClick={(event: MouseEvent<HTMLElement>) => setAvatarAnchor(event.currentTarget)}
             aria-label="Abrir menú de perfil"
@@ -178,7 +192,13 @@ export function MainLayoutClient({
 
       <Box
         component="main"
-        sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` } }}
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },
+          minHeight: '100vh',
+          bgcolor: 'background.default',
+        }}
       >
         <Toolbar />
         {children}

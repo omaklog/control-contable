@@ -1,12 +1,14 @@
 'use client'
 
 import type { ClienteFormValues, RegimenFiscalOption } from '@control-contable/utils'
-import { ClienteForm } from '@control-contable/ui'
+import { ClienteForm, StatusChip } from '@control-contable/ui'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import FormControlLabel from '@mui/material/FormControlLabel'
+import IconButton from '@mui/material/IconButton'
 import Pagination from '@mui/material/Pagination'
+import Paper from '@mui/material/Paper'
 import Switch from '@mui/material/Switch'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
@@ -14,7 +16,10 @@ import TableCell from '@mui/material/TableCell'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import TextField from '@mui/material/TextField'
+import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
+import AddIcon from '@mui/icons-material/Add'
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useTransition } from 'react'
@@ -132,53 +137,67 @@ export function ClientesPortalClient({
         <Box sx={{ flexGrow: 1 }} />
 
         {canManage ? (
-          <Button variant="contained" onClick={abrirModal}>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={abrirModal}>
             Agregar cliente
           </Button>
         ) : null}
       </Box>
 
-      {clientes.length === 0 ? (
-        <Typography color="text.secondary">
-          No se encontraron clientes {mostrarInactivos ? '' : 'activos '}
-          {q ? 'que coincidan con la búsqueda.' : 'registrados todavía.'}
-        </Typography>
-      ) : (
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Nombre</TableCell>
-              <TableCell>RFC</TableCell>
-              <TableCell>Correo</TableCell>
-              <TableCell>Estado</TableCell>
-              <TableCell>Detalle</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {clientes.map((cliente) => (
-              <TableRow key={cliente.id}>
-                <TableCell>{cliente.nombre}</TableCell>
-                <TableCell>{cliente.rfc}</TableCell>
-                <TableCell>{cliente.correo}</TableCell>
-                <TableCell>{cliente.estado === 'activo' ? 'Activo' : 'Inactivo'}</TableCell>
-                <TableCell>
-                  <Button size="small" component={Link} href={`/clientes/${cliente.id}`}>
-                    Ver detalle
-                  </Button>
-                </TableCell>
+      <Paper sx={{ p: 3 }}>
+        {clientes.length === 0 ? (
+          <Typography color="text.secondary">
+            No se encontraron clientes {mostrarInactivos ? '' : 'activos '}
+            {q ? 'que coincidan con la búsqueda.' : 'registrados todavía.'}
+          </Typography>
+        ) : (
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Nombre</TableCell>
+                <TableCell>RFC</TableCell>
+                <TableCell>Correo</TableCell>
+                <TableCell>Estado</TableCell>
+                <TableCell>Detalle</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
+            </TableHead>
+            <TableBody>
+              {clientes.map((cliente) => (
+                <TableRow key={cliente.id} hover>
+                  <TableCell>{cliente.nombre}</TableCell>
+                  <TableCell>{cliente.rfc}</TableCell>
+                  <TableCell>{cliente.correo}</TableCell>
+                  <TableCell>
+                    <StatusChip status={cliente.estado} />
+                  </TableCell>
+                  <TableCell>
+                    <Tooltip title="Ver detalle">
+                      <span>
+                        <IconButton
+                          size="small"
+                          component={Link}
+                          href={`/clientes/${cliente.id}`}
+                          aria-label="Ver detalle"
+                        >
+                          <VisibilityOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
 
-      {totalPaginas > 1 ? (
-        <Pagination
-          count={totalPaginas}
-          page={paginaActual}
-          onChange={(_event, pagina) => irAPagina(pagina)}
-        />
-      ) : null}
+        {totalPaginas > 1 ? (
+          <Pagination
+            count={totalPaginas}
+            page={paginaActual}
+            onChange={(_event, pagina) => irAPagina(pagina)}
+            sx={{ mt: 2 }}
+          />
+        ) : null}
+      </Paper>
 
       <ClienteForm
         open={modalAbierto}
