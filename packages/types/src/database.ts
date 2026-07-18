@@ -648,6 +648,105 @@ export type Database = {
         }
         Relationships: []
       }
+      servicios: {
+        Row: {
+          categoria: string
+          created_at: string
+          created_by: string | null
+          descripcion: string | null
+          estado: Database['public']['Enums']['servicio_estado']
+          id: string
+          nombre: string
+          observaciones: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          categoria: string
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string | null
+          estado?: Database['public']['Enums']['servicio_estado']
+          id?: string
+          nombre: string
+          observaciones?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string | null
+          estado?: Database['public']['Enums']['servicio_estado']
+          id?: string
+          nombre?: string
+          observaciones?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      servicios_contratados: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          created_by: string | null
+          estado: Database['public']['Enums']['servicio_contratado_estado']
+          fecha_fin: string | null
+          fecha_inicio: string
+          id: string
+          observaciones: string | null
+          precio_acordado: number
+          servicio_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          created_by?: string | null
+          estado?: Database['public']['Enums']['servicio_contratado_estado']
+          fecha_fin?: string | null
+          fecha_inicio?: string
+          id?: string
+          observaciones?: string | null
+          precio_acordado: number
+          servicio_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          created_by?: string | null
+          estado?: Database['public']['Enums']['servicio_contratado_estado']
+          fecha_fin?: string | null
+          fecha_inicio?: string
+          id?: string
+          observaciones?: string | null
+          precio_acordado?: number
+          servicio_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'servicios_contratados_cliente_id_fkey'
+            columns: ['cliente_id']
+            isOneToOne: false
+            referencedRelation: 'clientes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'servicios_contratados_servicio_id_fkey'
+            columns: ['servicio_id']
+            isOneToOne: false
+            referencedRelation: 'servicios'
+            referencedColumns: ['id']
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -685,6 +784,8 @@ export type Database = {
       cliente_estado: 'activo' | 'inactivo'
       contacto_estado: 'activo' | 'obsoleto'
       documento_estado: 'activo' | 'reemplazado'
+      servicio_contratado_estado: 'activo' | 'suspendido' | 'finalizado'
+      servicio_estado: 'activo' | 'inactivo'
       tipo_persona: 'fisica' | 'moral'
     }
     CompositeTypes: {
@@ -1335,6 +1436,8 @@ export const Constants = {
       cliente_estado: ['activo', 'inactivo'],
       contacto_estado: ['activo', 'obsoleto'],
       documento_estado: ['activo', 'reemplazado'],
+      servicio_contratado_estado: ['activo', 'suspendido', 'finalizado'],
+      servicio_estado: ['activo', 'inactivo'],
       tipo_persona: ['fisica', 'moral'],
     },
   },

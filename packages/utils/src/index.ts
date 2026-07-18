@@ -14,3 +14,13 @@ export {
   mapearErrorContactoAMensaje,
   type ContactoFormValues,
 } from './contactoForm'
+export {
+  servicioFormSchema,
+  mapearErrorServicioAMensaje,
+  type ServicioFormValues,
+} from './servicioForm'
+export {
+  servicioContratadoFormSchema,
+  mapearErrorServicioContratadoAMensaje,
+  type ServicioContratadoFormValues,
+} from './servicioContratadoForm'

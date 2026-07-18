@@ -5,13 +5,25 @@ import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
 import { notFound } from 'next/navigation'
 
-import { createContacto, setContactoEstado, setContactoPrincipal, updateContacto } from './actions'
+import {
+  agregarServicioContratado,
+  cambiarPrecioServicioContratado,
+  createContacto,
+  finalizarServicioContratado,
+  obtenerHistorialServicioContratado,
+  reactivarServicioContratado,
+  setContactoEstado,
+  setContactoPrincipal,
+  suspenderServicioContratado,
+  updateContacto,
+} from './actions'
 
 /**
  * Página de detalle de Cliente (008-contactos-y-detalle-cliente US1):
  * primera ruta dinámica del monorepo. requireCapability('view_clients') deja
  * entrar a Auxiliar en modo solo lectura; canManage habilita la gestión de
- * Contactos dentro de ClienteDetalleClient (Historia 2).
+ * Contactos y Servicios Contratados dentro de ClienteDetalleClient (Historia
+ * 2, y 011-gestion-servicios Historias 2-4).
  */
 export default async function ClienteDetallePage({
   params,
@@ -22,7 +34,12 @@ export default async function ClienteDetallePage({
   const supabase = await createServerSupabaseClient()
   const { clienteId } = await params
 
-  const [{ data: clienteData }, { data: contactosData }] = await Promise.all([
+  const [
+    { data: clienteData },
+    { data: contactosData },
+    { data: serviciosContratadosData },
+    { data: serviciosDisponiblesData },
+  ] = await Promise.all([
     supabase
       .from('clientes')
       .select(
@@ -34,6 +51,18 @@ export default async function ClienteDetallePage({
       .from('contactos')
       .select('id, nombre, telefono, email, estado, es_principal')
       .eq('cliente_id', clienteId)
+      .order('nombre', { ascending: true }),
+    supabase
+      .from('servicios_contratados')
+      .select(
+        'id, servicio_id, precio_acordado, fecha_inicio, fecha_fin, estado, observaciones, servicios(nombre)',
+      )
+      .eq('cliente_id', clienteId)
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('servicios')
+      .select('id, nombre')
+      .eq('estado', 'activo')
       .order('nombre', { ascending: true }),
   ])
 
@@ -62,6 +91,22 @@ export default async function ClienteDetallePage({
     esPrincipal: row.es_principal,
   }))
 
+  const servicios = (serviciosContratadosData ?? []).map((row) => ({
+    id: row.id,
+    servicioId: row.servicio_id,
+    servicioNombre: row.servicios?.nombre ?? '',
+    precioAcordado: row.precio_acordado,
+    fechaInicio: row.fecha_inicio,
+    fechaFin: row.fecha_fin,
+    estado: row.estado,
+    observaciones: row.observaciones,
+  }))
+
+  const serviciosDisponibles = (serviciosDisponiblesData ?? []).map((row) => ({
+    id: row.id,
+    nombre: row.nombre,
+  }))
+
   const canManage = currentProfile.capabilities.includes('manage_clients')
 
   return (
@@ -77,6 +122,14 @@ export default async function ClienteDetallePage({
         onUpdateContacto={updateContacto.bind(null, clienteId)}
         onSetContactoEstado={setContactoEstado.bind(null, clienteId)}
         onSetContactoPrincipal={setContactoPrincipal.bind(null, clienteId)}
+        servicios={servicios}
+        serviciosDisponibles={serviciosDisponibles}
+        onAgregarServicio={agregarServicioContratado.bind(null, clienteId)}
+        onCambiarPrecioServicio={cambiarPrecioServicioContratado.bind(null, clienteId)}
+        onSuspenderServicio={suspenderServicioContratado.bind(null, clienteId)}
+        onReactivarServicio={reactivarServicioContratado.bind(null, clienteId)}
+        onFinalizarServicio={finalizarServicioContratado.bind(null, clienteId)}
+        onObtenerHistorialServicio={obtenerHistorialServicioContratado}
       />
     </Container>
   )

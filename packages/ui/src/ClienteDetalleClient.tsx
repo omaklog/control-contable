@@ -1,6 +1,6 @@
 'use client'
 
-import type { ContactoFormValues } from '@control-contable/utils'
+import type { ContactoFormValues, ServicioContratadoFormValues } from '@control-contable/utils'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -21,14 +21,21 @@ import TableRow from '@mui/material/TableRow'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import AddIcon from '@mui/icons-material/Add'
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
+import HistoryIcon from '@mui/icons-material/History'
+import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline'
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline'
 import StarOutlineIcon from '@mui/icons-material/StarOutline'
+import StopCircleOutlinedIcon from '@mui/icons-material/StopCircleOutlined'
 import BlockIcon from '@mui/icons-material/Block'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 
 import { ContactoForm } from './ContactoForm'
+import { ServicioContratadoForm, type ServicioOption } from './ServicioContratadoForm'
+import { ServicioHistorialDialog, type HistorialEvento } from './ServicioHistorialDialog'
 import { StatusChip } from './StatusChip'
 
 export interface ClienteDetalle {
@@ -52,6 +59,17 @@ export interface ContactoRow {
   esPrincipal: boolean
 }
 
+export interface ServicioContratadoRow {
+  id: string
+  servicioId: string
+  servicioNombre: string
+  precioAcordado: number
+  fechaInicio: string
+  fechaFin: string | null
+  estado: 'activo' | 'suspendido' | 'finalizado'
+  observaciones: string | null
+}
+
 interface ActionResult {
   error: string | null
 }
@@ -73,6 +91,14 @@ export function ClienteDetalleClient({
   onUpdateContacto,
   onSetContactoEstado,
   onSetContactoPrincipal,
+  servicios,
+  serviciosDisponibles,
+  onAgregarServicio,
+  onCambiarPrecioServicio,
+  onSuspenderServicio,
+  onReactivarServicio,
+  onFinalizarServicio,
+  onObtenerHistorialServicio,
 }: {
   cliente: ClienteDetalle
   contactos: ContactoRow[]
@@ -81,6 +107,16 @@ export function ClienteDetalleClient({
   onUpdateContacto: (contactoId: string, values: ContactoFormValues) => Promise<ActionResult>
   onSetContactoEstado: (contactoId: string, estado: 'activo' | 'obsoleto') => Promise<ActionResult>
   onSetContactoPrincipal: (contactoId: string) => Promise<ActionResult>
+  servicios: ServicioContratadoRow[]
+  serviciosDisponibles: ServicioOption[]
+  onAgregarServicio: (values: ServicioContratadoFormValues) => Promise<ActionResult>
+  onCambiarPrecioServicio: (servicioContratadoId: string, precio: number) => Promise<ActionResult>
+  onSuspenderServicio: (servicioContratadoId: string) => Promise<ActionResult>
+  onReactivarServicio: (servicioContratadoId: string) => Promise<ActionResult>
+  onFinalizarServicio: (servicioContratadoId: string) => Promise<ActionResult>
+  onObtenerHistorialServicio: (
+    servicioContratadoId: string,
+  ) => Promise<{ eventos: HistorialEvento[]; error: string | null }>
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -162,6 +198,94 @@ export function ClienteDetalleClient({
       }
       router.refresh()
     })
+  }
+
+  const [servicioFormMode, setServicioFormMode] = useState<'agregar' | 'cambiarPrecio' | null>(null)
+  const [servicioFormTarget, setServicioFormTarget] = useState<ServicioContratadoRow | null>(null)
+  const [servicioFormError, setServicioFormError] = useState<string | null>(null)
+  const [confirmFinalizarId, setConfirmFinalizarId] = useState<string | null>(null)
+  const [historialOpen, setHistorialOpen] = useState(false)
+  const [historialEventos, setHistorialEventos] = useState<HistorialEvento[]>([])
+  const [historialError, setHistorialError] = useState<string | null>(null)
+
+  function abrirAgregarServicio() {
+    setServicioFormError(null)
+    setServicioFormTarget(null)
+    setServicioFormMode('agregar')
+  }
+
+  function abrirCambiarPrecio(servicio: ServicioContratadoRow) {
+    setServicioFormError(null)
+    setServicioFormTarget(servicio)
+    setServicioFormMode('cambiarPrecio')
+  }
+
+  function handleGuardarServicio(values: ServicioContratadoFormValues) {
+    setServicioFormError(null)
+    startTransition(async () => {
+      const result =
+        servicioFormMode === 'cambiarPrecio' && servicioFormTarget
+          ? await onCambiarPrecioServicio(servicioFormTarget.id, Number(values.precioAcordado))
+          : await onAgregarServicio(values)
+      if (result.error) {
+        setServicioFormError(result.error)
+        return
+      }
+      setServicioFormMode(null)
+      setServicioFormTarget(null)
+      router.refresh()
+    })
+  }
+
+  function suspenderServicio(servicioContratadoId: string) {
+    setGlobalError(null)
+    startTransition(async () => {
+      const result = await onSuspenderServicio(servicioContratadoId)
+      if (result.error) {
+        setGlobalError(result.error)
+        return
+      }
+      router.refresh()
+    })
+  }
+
+  function reactivarServicio(servicioContratadoId: string) {
+    setGlobalError(null)
+    startTransition(async () => {
+      const result = await onReactivarServicio(servicioContratadoId)
+      if (result.error) {
+        setGlobalError(result.error)
+        return
+      }
+      router.refresh()
+    })
+  }
+
+  function confirmarFinalizarServicio() {
+    if (!confirmFinalizarId) return
+    const servicioContratadoId = confirmFinalizarId
+    setConfirmFinalizarId(null)
+    setGlobalError(null)
+    startTransition(async () => {
+      const result = await onFinalizarServicio(servicioContratadoId)
+      if (result.error) {
+        setGlobalError(result.error)
+        return
+      }
+      router.refresh()
+    })
+  }
+
+  async function abrirHistorial(servicioContratadoId: string) {
+    setHistorialError(null)
+    setHistorialEventos([])
+    setHistorialOpen(true)
+    const result = await onObtenerHistorialServicio(servicioContratadoId)
+    if (result.error) {
+      setHistorialError(result.error)
+      return
+    }
+    setHistorialEventos(result.eventos)
   }
 
   return (
@@ -363,6 +487,134 @@ export function ClienteDetalleClient({
       </Paper>
 
       <Paper sx={{ p: 3 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 2,
+            mb: 2,
+          }}
+        >
+          <Typography variant="h6">Servicios</Typography>
+          {canManage ? (
+            <Button variant="contained" startIcon={<AddIcon />} onClick={abrirAgregarServicio}>
+              Agregar servicio
+            </Button>
+          ) : null}
+        </Box>
+
+        {servicios.length === 0 ? (
+          <Typography color="text.secondary">
+            Este cliente no tiene servicios contratados todavía.
+          </Typography>
+        ) : (
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Servicio</TableCell>
+                <TableCell>Precio</TableCell>
+                <TableCell>Estado</TableCell>
+                <TableCell>Inicio</TableCell>
+                <TableCell>Fin</TableCell>
+                <TableCell>Observaciones</TableCell>
+                {canManage ? <TableCell>Acciones</TableCell> : null}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {servicios.map((servicio) => (
+                <TableRow key={servicio.id} hover>
+                  <TableCell>{servicio.servicioNombre}</TableCell>
+                  <TableCell>${servicio.precioAcordado.toLocaleString('es-MX')}</TableCell>
+                  <TableCell>
+                    <StatusChip status={servicio.estado} />
+                  </TableCell>
+                  <TableCell>{servicio.fechaInicio}</TableCell>
+                  <TableCell>{servicio.fechaFin ?? '—'}</TableCell>
+                  <TableCell>{servicio.observaciones || '—'}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Tooltip title="Ver historial">
+                        <span>
+                          <IconButton
+                            size="small"
+                            onClick={() => abrirHistorial(servicio.id)}
+                            aria-label="Ver historial"
+                          >
+                            <HistoryIcon fontSize="small" />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                      {canManage ? (
+                        <>
+                          <Tooltip title="Cambiar precio">
+                            <span>
+                              <IconButton
+                                size="small"
+                                disabled={isPending}
+                                onClick={() => abrirCambiarPrecio(servicio)}
+                                aria-label="Cambiar precio"
+                              >
+                                <AttachMoneyIcon fontSize="small" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                          {servicio.estado === 'activo' ? (
+                            <Tooltip title="Suspender">
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  disabled={isPending}
+                                  onClick={() => suspenderServicio(servicio.id)}
+                                  aria-label="Suspender servicio"
+                                >
+                                  <PauseCircleOutlineIcon fontSize="small" />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                          ) : null}
+                          {servicio.estado !== 'activo' ? (
+                            <Tooltip title="Reactivar">
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  disabled={isPending}
+                                  onClick={() => reactivarServicio(servicio.id)}
+                                  aria-label="Reactivar servicio"
+                                >
+                                  <PlayCircleOutlineIcon fontSize="small" />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                          ) : null}
+                          {servicio.estado !== 'finalizado' ? (
+                            <Tooltip title="Finalizar">
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  disabled={isPending}
+                                  onClick={() => setConfirmFinalizarId(servicio.id)}
+                                  aria-label="Finalizar servicio"
+                                >
+                                  <StopCircleOutlinedIcon fontSize="small" />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                          ) : null}
+                        </>
+                      ) : null}
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Paper>
+
+      <Paper sx={{ p: 3 }}>
         <Typography variant="h6" gutterBottom>
           Pagos pendientes
         </Typography>
@@ -394,6 +646,43 @@ export function ClienteDetalleClient({
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ServicioContratadoForm
+        open={servicioFormMode !== null}
+        mode={servicioFormMode ?? 'agregar'}
+        servicioNombre={servicioFormTarget?.servicioNombre}
+        precioActual={servicioFormTarget?.precioAcordado}
+        serviciosDisponibles={serviciosDisponibles}
+        error={servicioFormError}
+        onClose={() => {
+          setServicioFormMode(null)
+          setServicioFormTarget(null)
+        }}
+        onSubmit={handleGuardarServicio}
+      />
+
+      <Dialog open={Boolean(confirmFinalizarId)} onClose={() => setConfirmFinalizarId(null)}>
+        <DialogTitle>Finalizar servicio</DialogTitle>
+        <DialogContent>
+          <Typography>
+            ¿Seguro que deseas finalizar este servicio? Podrás reactivarlo más adelante si el
+            cliente vuelve a solicitarlo, conservando su historial.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmFinalizarId(null)}>Cancelar</Button>
+          <Button variant="contained" color="error" onClick={confirmarFinalizarServicio}>
+            Confirmar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <ServicioHistorialDialog
+        open={historialOpen}
+        onClose={() => setHistorialOpen(false)}
+        eventos={historialEventos}
+        error={historialError}
+      />
     </Box>
   )
 }

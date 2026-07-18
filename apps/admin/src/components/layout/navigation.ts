@@ -2,6 +2,7 @@ import type { MenuItem } from '@control-contable/ui'
 import BusinessIcon from '@mui/icons-material/Business'
 import HistoryIcon from '@mui/icons-material/History'
 import HomeIcon from '@mui/icons-material/Home'
+import MiscellaneousServicesIcon from '@mui/icons-material/MiscellaneousServices'
 import PeopleIcon from '@mui/icons-material/People'
 
 /**
@@ -26,6 +27,13 @@ export const MENU_ITEMS: MenuItem[] = [
     href: '/clientes',
     icon: BusinessIcon,
     capability: 'view_clients',
+    implemented: true,
+  },
+  {
+    label: 'Servicios',
+    href: '/servicios',
+    icon: MiscellaneousServicesIcon,
+    capability: 'manage_catalogs',
     implemented: true,
   },
   {
