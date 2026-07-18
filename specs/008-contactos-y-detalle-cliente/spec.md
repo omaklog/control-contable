@@ -16,6 +16,15 @@
 - Q: ¿Qué tan visible debe ser la sección de "Pagos pendientes" en esta feature? → A: Visible como sección propia en la página de detalle del Cliente (sin lógica de cobranza todavía — ver Assumptions).
 - Q: ¿El enlace hacia la página de detalle reemplaza alguna acción existente en los listados de Clientes? → A: No — se agrega junto a las acciones ya existentes (Editar/Eliminar en admin; ninguna en portal).
 
+### Session 2026-07-18 (alineación con `001-business-domain-model` y `docs/ux/design-system.md`)
+
+- Q: ¿`ClienteDetalleClient.tsx` sigue la regla de Chip semántico de `design-system.md` (§4) para sus dos columnas de "Estado" (Cliente y Contacto)? → A: No todavía — ambas muestran texto plano ("Activo"/"Inactivo", "Activo"/"Obsoleto"). No estaba registrado en `docs/ux/design-system.md` §10 (que solo cubría las acciones de fila de esta pantalla y su migración futura a Cliente 360); se agrega ahí como pendiente, sin cambiar el código en esta sesión.
+- Q: `docs/ux/design-system.md` §10 (punto 4) ya planea migrar esta pantalla a la experiencia tabulada "Cliente 360" — ¿se agrega esa referencia a las Assumptions de 008? → A: Sí, como nota de cross-reference — 008 es el punto de partida de esa migración futura, sin que esta sesión cambie su alcance.
+
+### Session 2026-07-18 (segunda sesión, `/speckit-clarify`)
+
+- Q: El campo `Input` original de esta feature menciona agregar "nuevos contactos **o servicios**" desde la página de detalle, pero ningún FR/Assumption explica por qué "Servicios" quedó fuera del alcance final — ¿se documenta esa omisión? → A: Sí — Servicios queda fuera de alcance porque ese módulo (`001-business-domain-model`) no tiene modelo de datos propio todavía; no hay nada que agregar desde esta pantalla porque el dominio no existe. No es una decisión nueva, es una aclaración de por qué el Input original no se cubrió por completo.
+
 ## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Ver el detalle de un Cliente (Priority: P1) 🎯 MVP
@@ -117,3 +126,6 @@ Como Contador o Administrador, quiero que la página de detalle de un Cliente ya
 - La sección de "Pagos pendientes" de la página de detalle es visible en esta feature (no se omite), pero no incluye ninguna lógica de negocio de cobranza real (cálculo de montos, vencimientos, generación/consulta de cargos) — el diseño detallado de esa sección (qué datos mostrar y cómo) se define en la feature de cobranza que la construya; aquí sólo se reserva y rotula el espacio dentro del layout de la página de detalle.
 - "Obsoleto" reemplaza por completo a la eliminación de Contactos en esta feature: no existe un borrado definitivo desde la interfaz.
 - No se agrega auditoría (`business_audit_log`) para los cambios de Contactos en esta feature — los Contactos no son una entidad financiera crítica como Clientes o pagos.
+- **(2026-07-18)** `ClienteDetalleClient.tsx` no sigue la regla de Chip semántico de `docs/ux/design-system.md` §4 en sus dos columnas de "Estado" (la del Cliente y la de cada Contacto) — ambas muestran texto plano. Registrado como pendiente en `docs/ux/design-system.md` §10 (punto 9); sin cambio de alcance funcional aquí, el seguimiento vive en ese documento.
+- **(2026-07-18)** `docs/ux/design-system.md` §9-§10 (punto 4) ya define que esta pantalla debe migrar a la experiencia tabulada "Cliente 360" (Información General · Servicios · Obligaciones Fiscales · Documentos · Cobranza · Auditoría) cuando esos dominios existan y tengan datos que mostrar — `ClienteDetalleClient.tsx` (esta feature) es el punto de partida de esa migración, no su versión final. La sección "Pagos pendientes" (FR-011, placeholder) es un concepto más angosto que el futuro tab "Cobranza"/"resumen financiero" que Cliente 360 anticipa — quien especifique Cobranza deberá decidir si la reemplaza o la absorbe dentro de esa pestaña.
+- **(2026-07-18)** El campo `Input` original de esta feature mencionaba agregar "nuevos contactos o servicios" desde la página de detalle. "Servicios" queda fuera de alcance de esta feature: ese módulo (`001-business-domain-model`) no tiene modelo de datos propio todavía, así que no hay nada que agregar desde aquí. Cuando se especifique Servicios, esa feature (o la migración a Cliente 360, ver nota anterior) decidirá dónde vive su alta — probablemente como pestaña propia de Cliente 360, no como una adición a esta página de detalle en su forma actual.
