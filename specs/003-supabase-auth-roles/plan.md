@@ -12,6 +12,12 @@
 
 Construir la base de autenticación y autorización del sistema sobre Supabase Auth (GoTrue) + PostgreSQL/RLS para el personal del despacho (Administrador, Contador, Auxiliar): `apps/admin` (Panel Administrativo) es exclusiva del rol Administrador; `apps/portal` (operación diaria) es accesible para los 3 roles. No existe autoregistro público ni alta por invitación: toda cuenta la crea manualmente un Administrador, con una contraseña temporal generada por el sistema que el usuario debe cambiar en su primer inicio de sesión (mismo mecanismo que el restablecimiento de contraseña, FR-008/FR-010/FR-013) — sin depender en ningún caso de un proveedor SMTP. Un Administrador puede además ajustar capacidades individuales por usuario, por encima de la plantilla por defecto de su rol (FR-014). El acceso se revoca de inmediato ante cambio de rol o desactivación, y se audita. El enfoque técnico añade dos paquetes compartidos (`packages/supabase-client` y `packages/auth`) consumidos por ambas apps, y un esquema de base de datos (`profiles`, historial de cambios, ajustes de permisos por usuario, funciones/RLS) — sin introducir un sistema de roles dinámico: los 3 roles y su plantilla de capacidades por defecto quedan fijos en código, tal como los describe la constitución del proyecto; solo las excepciones puntuales por usuario son configurables en runtime.
 
+**Estado**: Feature ya implementada (`tasks.md`, 79/79 tareas, incluidos los Reworks #1-#4). Este re-planeamiento (2026-07-17) cubre únicamente el **ajuste pendiente con superficie de código real** detectado al alinear `spec.md` con `001-business-domain-model` y `docs/ux/design-system.md` (ver spec.md, Clarifications, sesión 2026-07-17, y Assumptions):
+
+1. `apps/admin/src/app/(app)/usuarios/UsuariosClient.tsx` no sigue dos reglas de `docs/ux/design-system.md` que ya aplican sin excepción a esa pantalla (publicadas después de construirla): acciones de fila siempre visibles en vez de solo-hover (§5), y columna "Estado" como texto plano en vez de un Chip semántico (§4).
+
+El resto de los hallazgos de esa sesión (nomenclatura de FR-003, aclaración de FR-009, capacidades pre-provisionadas, `manage_catalogs` sin dueño, Edge Case de fuerza bruta) quedaron resueltos **enteramente como documentación** — no requieren ningún cambio de código, por lo que no generan tareas de implementación. No hay cambios de alcance funcional, de base de datos, ni de dependencias nuevas.
+
 ## Technical Context
 
 **Language/Version**: TypeScript 5.7 (strict, sin `any`), Next.js 15 (App Router), React 19 — mismas versiones ya usadas por `apps/admin` y `apps/portal`.
@@ -52,6 +58,8 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 No se identifican violaciones. No se requiere completar `Complexity Tracking`.
 
 **Re-check post-diseño (Fase 1)**: `research.md`, `data-model.md`, `contracts/` y `quickstart.md` concretan cada fila anterior (esquema `profiles`/`profile_change_history`/`permission_overrides`, función `is_administrador()`, trigger de "último Administrador", RLS por tabla) sin introducir nada fuera de lo ya evaluado. La tabla se mantiene sin cambios: PASS.
+
+**Re-check adicional (2026-07-17, ajuste pendiente)**: la fila "UI: Material UI, formularios consistentes..." se extiende para cubrir explícitamente `docs/ux/design-system.md` (publicado después de esta feature) — el ajuste a `UsuariosClient.tsx` (research.md #14) es puramente de presentación (row-actions hover, Chip de estado), sin tocar datos, RLS ni capacidades. El resto de la tabla no cambia: PASS.
 
 ## Project Structure
 
@@ -125,6 +133,22 @@ apps/portal/src/
 >
 > - **2026-07-15 (primera sesión de clarificación)**: FR-008/FR-013 reemplazaron el restablecimiento de contraseña por correo por un flujo administrado por un Administrador con contraseña temporal — ver `research.md` #10. Ya implementado (T041-T049 de `tasks.md`); sin cambios adicionales en esta revisión.
 > - **2026-07-15 (segunda sesión de clarificación, este documento)**: se elimina el rol Cliente, `account_type` y el alta por invitación; `apps/portal` se repropone para personal; se agrega el sistema de permisos por usuario — ver `research.md` #11-#13 y `spec.md` Clarifications. **Pendiente de `/speckit-tasks`**: el desglose de tareas en `tasks.md` (T001-T049) describe la implementación **anterior** a este cambio y queda en buena parte obsoleto — no se ha modificado todavía; requiere una regeneración con `/speckit-tasks` que incluya explícitamente qué eliminar (rol Cliente del enum, `account_type`, `account_invitations`, la UI de invitación, las pruebas de "aislamiento entre clientes") y qué construir (migración nueva, `permission_overrides`, `requireApp()`, alta manual con contraseña temporal, UI de ajuste de permisos).
+> - **2026-07-17 (alineación con `001-business-domain-model` y `docs/ux/design-system.md`)**: `tasks.md` ya cubre FR-015 a FR-019 (Reworks #3/#4, 79/79 tareas). Este re-planeamiento agrega únicamente el ajuste de `UsuariosClient.tsx` (research.md #14) — ver Project Structure.
+
+### Ajuste pendiente (2026-07-17): `apps/admin/src/app/(app)/usuarios/UsuariosClient.tsx`
+
+Único archivo con superficie de código real de esta pasada — el resto de los hallazgos de la sesión de clarificación quedaron resueltos como documentación (ver Summary):
+
+```text
+apps/admin/src/app/(app)/usuarios/
+└── UsuariosClient.tsx   # AJUSTE PENDIENTE (research.md #14):
+                          #  - Columna "Estado": Chip semántico (azul=Activa, gris=Desactivada,
+                          #    design-system.md §4/§1.1) en vez de texto plano
+                          #  - Columna "Acciones": los 4 botones (Editar nombre, Activar/Desactivar,
+                          #    Contraseña temporal, Permisos) pasan de visibles siempre a visibles
+                          #    solo al hacer hover sobre la fila (design-system.md §5)
+                          # Sin cambios de datos, RLS, capacidades ni Server Actions — puramente visual.
+```
 
 ## Complexity Tracking
 

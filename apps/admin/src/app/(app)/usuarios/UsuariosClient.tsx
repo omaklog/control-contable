@@ -1,16 +1,24 @@
 'use client'
 
 import type { AppRole, Capability } from '@control-contable/auth'
+import EditIcon from '@mui/icons-material/Edit'
+import LockResetIcon from '@mui/icons-material/LockReset'
+import ToggleOffIcon from '@mui/icons-material/ToggleOff'
+import ToggleOnIcon from '@mui/icons-material/ToggleOn'
+import TuneIcon from '@mui/icons-material/Tune'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Chip from '@mui/material/Chip'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import FormControlLabel from '@mui/material/FormControlLabel'
+import IconButton from '@mui/material/IconButton'
 import MenuItem from '@mui/material/MenuItem'
 import Select, { type SelectChangeEvent } from '@mui/material/Select'
+import { alpha } from '@mui/material/styles'
 import Switch from '@mui/material/Switch'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
@@ -18,6 +26,7 @@ import TableCell from '@mui/material/TableCell'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import TextField from '@mui/material/TextField'
+import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import { useState, useTransition } from 'react'
 
@@ -204,7 +213,7 @@ export function UsuariosClient({
           </TableHead>
           <TableBody>
             {profiles.map((profile) => (
-              <TableRow key={profile.id}>
+              <TableRow key={profile.id} hover>
                 <TableCell>{profile.fullName ?? profile.id}</TableCell>
                 <TableCell>{profile.email}</TableCell>
                 <TableCell>
@@ -221,36 +230,81 @@ export function UsuariosClient({
                     ))}
                   </Select>
                 </TableCell>
-                <TableCell>{profile.isActive ? 'Activa' : 'Desactivada'}</TableCell>
                 <TableCell>
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    <Button size="small" disabled={isPending} onClick={() => openEditName(profile)}>
-                      Editar nombre
-                    </Button>
-                    <Button
-                      size="small"
-                      color={profile.isActive ? 'error' : 'success'}
-                      disabled={isPending || profile.id === currentProfileId}
-                      onClick={() =>
-                        setConfirmTarget({ id: profile.id, nextActive: !profile.isActive })
-                      }
-                    >
-                      {profile.isActive ? 'Desactivar' : 'Activar'}
-                    </Button>
-                    <Button
-                      size="small"
-                      disabled={isPending}
-                      onClick={() => setTempPasswordTarget(profile.id)}
-                    >
-                      Contraseña temporal
-                    </Button>
-                    <Button
-                      size="small"
-                      disabled={isPending}
-                      onClick={() => setPermissionsTargetId(profile.id)}
-                    >
-                      Permisos
-                    </Button>
+                  <Chip
+                    label={profile.isActive ? 'Activa' : 'Desactivada'}
+                    size="small"
+                    sx={(theme) => ({
+                      bgcolor: alpha(
+                        profile.isActive
+                          ? theme.palette.secondary.main
+                          : theme.palette.text.secondary,
+                        0.1,
+                      ),
+                      color: profile.isActive
+                        ? theme.palette.secondary.main
+                        : theme.palette.text.secondary,
+                      fontWeight: 600,
+                    })}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Box sx={{ display: 'flex', gap: 0.5 }}>
+                    <Tooltip title="Editar nombre">
+                      <span>
+                        <IconButton
+                          size="small"
+                          aria-label="Editar nombre"
+                          disabled={isPending}
+                          onClick={() => openEditName(profile)}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title={profile.isActive ? 'Desactivar cuenta' : 'Activar cuenta'}>
+                      <span>
+                        <IconButton
+                          size="small"
+                          aria-label={profile.isActive ? 'Desactivar cuenta' : 'Activar cuenta'}
+                          color={profile.isActive ? 'error' : 'success'}
+                          disabled={isPending || profile.id === currentProfileId}
+                          onClick={() =>
+                            setConfirmTarget({ id: profile.id, nextActive: !profile.isActive })
+                          }
+                        >
+                          {profile.isActive ? (
+                            <ToggleOnIcon fontSize="small" />
+                          ) : (
+                            <ToggleOffIcon fontSize="small" />
+                          )}
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title="Asignar contraseña temporal">
+                      <span>
+                        <IconButton
+                          size="small"
+                          aria-label="Asignar contraseña temporal"
+                          disabled={isPending}
+                          onClick={() => setTempPasswordTarget(profile.id)}
+                        >
+                          <LockResetIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title="Ajustar permisos individuales">
+                      <span>
+                        <IconButton
+                          size="small"
+                          aria-label="Ajustar permisos individuales"
+                          disabled={isPending}
+                          onClick={() => setPermissionsTargetId(profile.id)}
+                        >
+                          <TuneIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
                   </Box>
                 </TableCell>
               </TableRow>

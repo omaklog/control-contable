@@ -58,6 +58,8 @@ Valida las tres historias de usuario contra un Supabase local (CLI: `supabase st
    - **Esperado**: el login es exitoso pero el sistema redirige de inmediato a `/cambiar-contrasena`, sin permitir acceder a ninguna otra página (Acceptance Scenario 5, FR-013) — probar navegar directamente a `/` o `/usuarios` por URL y confirmar que también redirige a `/cambiar-contrasena`.
    - Establecer una nueva contraseña en esa pantalla y confirmar que el usuario ya puede navegar normalmente al resto de la aplicación según su rol.
    - Cerrar sesión y volver a iniciar sesión con la contraseña temporal anterior: debe fallar (ya no es válida).
+7. En la tabla de gestión de usuarios, observar la columna "Estado" y pasar el cursor sobre una fila (ajuste 2026-07-17, `docs/ux/design-system.md` §4/§5, research.md #14).
+   - **Esperado**: "Estado" se muestra como un Chip con forma de píldora (azul para "Activa", gris para "Desactivada"), no como texto plano. Toda la fila muestra un fondo de hover (no solo la columna de Acciones). Los 4 íconos de la columna "Acciones" (editar nombre, activar/desactivar, contraseña temporal, permisos) están siempre visibles (sin ocultarse/revelarse); pasar el cursor sobre cada ícono (o llegar a él con Tab) muestra un tooltip con su nombre.
 
 ## Verificación de auditoría (FR-009, SC-006)
 

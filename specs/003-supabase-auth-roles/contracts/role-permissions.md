@@ -15,19 +15,26 @@ Fuente única de verdad en código: `packages/auth/src/roles.ts` (plantilla por 
 
 ## Capacidades (plantilla por rol + excepciones por usuario)
 
-| Capacidad                                                            | Administrador | Contador |            Auxiliar            |
-| -------------------------------------------------------------------- | :-----------: | :------: | :----------------------------: |
-| Gestión operativa de clientes/cobranza/expedientes (futuros módulos) |      ✅       |    ✅    | Consulta/captura, sin eliminar |
-| Crear cuentas de personal (alta manual, FR-010)                      |      ✅       |    ❌    |               ❌               |
-| Cambiar el rol de otro usuario                                       |      ✅       |    ❌    |               ❌               |
-| Activar/desactivar cuentas                                           |      ✅       |    ❌    |               ❌               |
-| Asignar contraseña temporal a una cuenta existente (FR-008)          |      ✅       |    ❌    |               ❌               |
-| Ajustar permisos individuales de un usuario (FR-014)                 |      ✅       |    ❌    |               ❌               |
-| Consultar el registro de auditoría de autenticación                  |      ✅       |    ❌    |               ❌               |
+**Actualización 2026-07-17**: tabla regenerada a partir de los valores reales de `ALL_CAPABILITIES`/`ROLE_DEFAULT_CAPABILITIES` en `packages/auth/src/roles.ts` — la versión anterior usaba categorías abstractas ("futuros módulos") que ya no podían verificarse contra código, porque `manage_clients`/`view_clients` (`006`/`007`) ya están implementadas y `manage_billing`/`view_billing`/`manage_documents`/`view_documents` ya existen pre-asignadas por rol (ver `spec.md`, Assumptions 2026-07-17) aunque sus módulos (Cobranza, Gestión Documental Fiscal) todavía no existan.
+
+| Capacidad                 | Administrador | Contador | Auxiliar | Módulo/función                                                                                                          |
+| ------------------------- | :-----------: | :------: | :------: | ----------------------------------------------------------------------------------------------------------------------- |
+| `manage_users`            |      ✅       |    ❌    |    ❌    | Crear cuentas de personal, cambiar rol, activar/desactivar (FR-006)                                                     |
+| `view_auth_audit_log`     |      ✅       |    ❌    |    ❌    | Consultar el registro de auditoría de **acceso/autenticación** (FR-009)                                                 |
+| `manage_user_permissions` |      ✅       |    ❌    |    ❌    | Ajustar permisos individuales de otro usuario (FR-014)                                                                  |
+| `manage_clients`          |      ✅       |    ✅    |    ❌    | Gestionar clientes — alta/edición/baja (`006`/`007`)                                                                    |
+| `view_clients`            |      ✅       |    ✅    |    ✅    | Consultar clientes                                                                                                      |
+| `manage_billing`          |      ✅       |    ✅    |    ❌    | Gestionar cobranza — cargos y pagos (**sin módulo todavía**, ver `spec.md`)                                             |
+| `view_billing`            |      ✅       |    ✅    |    ✅    | Consultar cobranza (**sin módulo todavía**)                                                                             |
+| `manage_documents`        |      ✅       |    ❌    |    ❌    | Gestionar documentos del expediente (**sin módulo todavía**)                                                            |
+| `view_documents`          |      ✅       |    ✅    |    ✅    | Consultar documentos del expediente (**sin módulo todavía**)                                                            |
+| `manage_catalogs`         |      ✅       |    ❌    |    ❌    | **Sin consumidor todavía** — ambigua entre Configuración y un futuro catálogo de Servicios (ver `spec.md`, Assumptions) |
+
+La asignación por rol de esta tabla es la plantilla por defecto (`ROLE_DEFAULT_CAPABILITIES`); un Administrador puede otorgar o retirar cualquiera de estas capacidades para un usuario puntual mediante `permission_overrides` (FR-014), sin alterar la plantilla de su rol.
 
 ## Garantías del contrato
 
 - `packages/auth` expone `roleDefaultCapabilities(role: AppRole): Capability[]` como la plantilla por rol de esta tabla; `getCurrentProfile()` combina esa plantilla con las filas de `permission_overrides` del usuario para resolver `CurrentProfile.capabilities` — ningún componente decide visibilidad comparando strings de rol directamente ni consultando `permission_overrides` por su cuenta.
 - El acceso a aplicaciones (`requireApp('admin' | 'portal')`) es independiente del sistema de capacidades: es una regla fija por rol que un Administrador **no puede** ajustar por usuario — evita que un ajuste de permisos termine, indirectamente, dándole a un Contador o Auxiliar acceso a `apps/admin`.
 - Esta matriz debe mantenerse en paridad con las políticas RLS descritas en `db-functions-rls.md`: la UI oculta lo que el rol (más sus ajustes) no puede hacer, pero la base de datos es la que realmente lo impide (defensa en profundidad, constitución — "nunca confiar únicamente en validaciones del frontend").
-- Las filas marcadas "futuros módulos" (clientes/cobranza/expedientes) documentan la intención para cuando esos módulos existan; esta feature no los implementa, solo expone las primitivas (`roleDefaultCapabilities`, `permission_overrides`) que esos módulos futuros consumirán.
+- Las capacidades marcadas "sin módulo todavía" (`manage_billing`/`view_billing`/`manage_documents`/`view_documents`) documentan la intención para cuando Cobranza y Gestión Documental Fiscal existan; esta feature no los implementa, solo expone las primitivas (`roleDefaultCapabilities`, `permission_overrides`) que esos módulos futuros consumirán — `004-portal-main-layout` (Rework #2) ya las reusa en sus placeholders de navegación sin necesidad de nombres nuevos.
