@@ -28,6 +28,10 @@
 - Q: ¿Se agregan los hallazgos E1/E2/F4 del impact-report de `001` a este spec? → A: Sí, como notas de Assumptions — documentan intención futura sin implementarla ahora (ningún módulo de Servicios ni Gestión Fiscal existe todavía); evita que un futuro spec de esos dominios tenga que re-descubrir estos hallazgos.
 - Q: `docs/ux/design-system.md` define reglas de color semántico (azul=positivo, rojo=negativo, gris=neutro) pero nunca mapea los 4 estados de `cargo_estado` (pendiente/pagado/vencido/cancelado) — ¿se resuelve ese mapeo en esta sesión? → A: No — 005 declara explícitamente que no define pantallas; se deja anotado como una decisión pendiente para quien especifique la UI de Cobranza, en vez de decidirlo sin ese contexto.
 
+### Session 2026-07-18 (segunda sesión, `/speckit-clarify`)
+
+- Q: FR-016 exige un tamaño máximo "configurable" para Documentos, pero el límite real (20 MB) está fijo en código (`packages/utils/src/expedientes.ts#TAMANO_MAXIMO_DOCUMENTO_BYTES` + `check` de base de datos), sin ningún mecanismo para que un Administrador lo cambie desde una interfaz — ¿se corrige la redacción del requisito o se trata como una funcionalidad pendiente de construir? → A: Se corrige la redacción de FR-016 para reflejar la realidad actual (límite fijo definido en código, no configurable desde UI todavía); hacerlo configurable de verdad quedaría como mejora futura, fuera de esta sesión.
+
 ## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Registrar y consultar la ficha de un cliente (Priority: P1)
@@ -92,7 +96,7 @@ Un miembro del personal del despacho carga documentos fiscales de un cliente al 
 - ¿Qué sucede si se intenta dar de alta un cliente con el mismo RFC que uno ya dado de baja? El sistema debe evitar la ambigüedad de tener dos fichas con el mismo identificador fiscal, ya sea impidiendo el alta o reactivando la ficha existente.
 - ¿Qué sucede si un pago no cubre por completo el monto de un cargo de cobranza (pago parcial)? El cargo debe reflejar el saldo pendiente en vez de marcarse como pagado por completo.
 - ¿Qué sucede si un pago cubre más de un cargo de cobranza a la vez? El sistema debe poder asociar un mismo pago a varios cargos.
-- ¿Qué sucede si se intenta cargar un documento que excede el tamaño máximo configurado? El sistema debe rechazar la carga con un mensaje claro.
+- ¿Qué sucede si se intenta cargar un documento que excede el tamaño máximo (20 MB)? El sistema debe rechazar la carga con un mensaje claro.
 - ¿Qué sucede con los cargos de cobranza pendientes de un cliente que se da de baja? Permanecen en su estado e historial; darse de baja no los cancela ni los elimina automáticamente.
 - ¿Qué sucede si se intenta registrar un cargo de cobranza para un cliente inactivo? El sistema debe impedirlo, ya que un cliente dado de baja no debería generar cobranza nueva.
 - ¿Qué sucede si se intenta asignar a un cliente un régimen fiscal no aplicable a su tipo de persona, o uno cuya vigencia ya terminó? El sistema debe rechazar la asignación (ver Clarifications).
@@ -119,7 +123,7 @@ Un miembro del personal del despacho carga documentos fiscales de un cliente al 
 - **FR-013**: El sistema DEBE permitir reemplazar un Documento por una nueva versión, conservando las versiones anteriores consultables en un historial, sin eliminarlas físicamente.
 - **FR-014**: El sistema DEBE registrar quién cargó cada Documento y en qué fecha (historial de carga).
 - **FR-015**: El sistema NUNCA DEBE eliminar físicamente un Documento del expediente sin una autorización explícita; la eliminación por defecto DEBE ser lógica.
-- **FR-016**: El sistema DEBE definir un tamaño máximo configurable para los Documentos cargados, y DEBE rechazar cargas que lo excedan.
+- **FR-016**: El sistema DEBE definir un tamaño máximo para los Documentos cargados (hoy un valor fijo de 20 MB, definido en código — ver Assumptions), y DEBE rechazar cargas que lo excedan. Hacer este límite configurable desde una interfaz de administración queda fuera de alcance de esta especificación.
 - **FR-017**: El sistema DEBE registrar fecha de creación, fecha de última modificación, usuario que creó y usuario que modificó por última vez, para cada Cliente, Cargo de cobranza, Pago, Recibo, Categoría de documento y Documento.
 - **FR-018**: El sistema DEBE registrar como eventos de auditoría: altas y modificaciones de Clientes, cambios en Pagos, carga y eliminación de Documentos, y generación de Recibos.
 - **FR-019**: El acceso a la información de Clientes, Cobranza y Expedientes DEBE respetar el modelo de roles y capacidades ya definido para el personal del despacho (Administrador, Contador, Auxiliar), sin introducir un sistema de permisos independiente.
@@ -171,3 +175,4 @@ Un miembro del personal del despacho carga documentos fiscales de un cliente al 
 - **(2026-07-18)** `documentos`/`categorias_documento` hoy solo se relacionan con `cliente_id`. Se anticipa que, cuando se especifique Gestión Fiscal (Obligaciones y Periodos Fiscales), un Documento pueda tener una relación opcional a un Periodo Fiscal — sin alterar el expediente ya construido. Tampoco es una decisión de esta sesión.
 - **(2026-07-18)** `business_audit_log.entidad` es de tipo `text` sin `enum`/`check` (por diseño). Esto facilita el trabajo futuro: agregar auditoría de negocio para una entidad nueva (Servicio, Obligación Fiscal, Notificación) no requiere una migración de esquema, solo un nuevo trigger que inserte en esta misma tabla.
 - **(2026-07-18)** `docs/ux/design-system.md` es la fuente de verdad de reglas UX del proyecto, incluida la regla de color semántico (azul=positivo, rojo=negativo/atención, gris=neutro; nunca verde). Esa regla todavía no mapea explícitamente los 4 valores de `cargo_estado` (`pendiente`, `pagado`, `vencido`, `cancelado`) a un color — queda como decisión pendiente para quien especifique la interfaz de Cobranza (fuera de alcance de esta feature de modelado de datos), no una omisión a corregir aquí.
+- **(2026-07-18)** El tamaño máximo de Documentos (FR-016) es hoy un valor fijo de 20 MB (`packages/utils/src/expedientes.ts#TAMANO_MAXIMO_DOCUMENTO_BYTES`, replicado como `check` en la columna `documentos.tamano_bytes`), no una configuración editable desde una interfaz de Administrador — a pesar de que una redacción anterior de FR-016 sugería lo contrario. Convertirlo en configurable de verdad (tabla de configuración + UI) queda fuera de alcance de esta especificación.
