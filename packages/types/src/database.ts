@@ -455,6 +455,39 @@ export type Database = {
           },
         ]
       }
+      periodicidades: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          descripcion: string | null
+          estado: Database['public']['Enums']['periodicidad_estado']
+          id: string
+          nombre: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string | null
+          estado?: Database['public']['Enums']['periodicidad_estado']
+          id?: string
+          nombre: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string | null
+          estado?: Database['public']['Enums']['periodicidad_estado']
+          id?: string
+          nombre?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       permission_overrides: {
         Row: {
           capability: string
@@ -784,6 +817,7 @@ export type Database = {
       cliente_estado: 'activo' | 'inactivo'
       contacto_estado: 'activo' | 'obsoleto'
       documento_estado: 'activo' | 'reemplazado'
+      periodicidad_estado: 'activo' | 'inactivo'
       servicio_contratado_estado: 'activo' | 'suspendido' | 'finalizado'
       servicio_estado: 'activo' | 'inactivo'
       tipo_persona: 'fisica' | 'moral'
@@ -1436,6 +1470,7 @@ export const Constants = {
       cliente_estado: ['activo', 'inactivo'],
       contacto_estado: ['activo', 'obsoleto'],
       documento_estado: ['activo', 'reemplazado'],
+      periodicidad_estado: ['activo', 'inactivo'],
       servicio_contratado_estado: ['activo', 'suspendido', 'finalizado'],
       servicio_estado: ['activo', 'inactivo'],
       tipo_persona: ['fisica', 'moral'],
