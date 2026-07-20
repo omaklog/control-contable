@@ -29,3 +29,16 @@ export {
   mapearErrorObligacionFiscalAMensaje,
   type ObligacionFiscalFormValues,
 } from './obligacionFiscalForm'
+export {
+  obligacionFiscalClienteFormSchema,
+  mapearErrorObligacionFiscalClienteAMensaje,
+  type ObligacionFiscalClienteFormValues,
+} from './obligacionFiscalClienteForm'
+export {
+  plantillaObligacionesFormSchema,
+  plantillaItemFormSchema,
+  mapearErrorPlantillaObligacionesAMensaje,
+  mapearErrorPlantillaItemAMensaje,
+  type PlantillaObligacionesFormValues,
+  type PlantillaItemFormValues,
+} from './plantillaObligacionesForm'

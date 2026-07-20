@@ -6,10 +6,15 @@ import Typography from '@mui/material/Typography'
 import { notFound } from 'next/navigation'
 
 import {
+  agregarObligacionFiscalCliente,
   agregarServicioContratado,
+  aplicarPlantillaObligaciones,
   cambiarPrecioServicioContratado,
   createContacto,
+  editarObligacionFiscalCliente,
+  eliminarObligacionFiscalCliente,
   finalizarServicioContratado,
+  marcarNoAplicaObligacionFiscalCliente,
   obtenerHistorialServicioContratado,
   reactivarServicioContratado,
   setContactoEstado,
@@ -39,6 +44,10 @@ export default async function ClienteDetallePage({
     { data: contactosData },
     { data: serviciosContratadosData },
     { data: serviciosDisponiblesData },
+    { data: obligacionesFiscalesClienteData },
+    { data: obligacionesFiscalesDisponiblesData },
+    { data: periodicidadesDisponiblesData },
+    { data: plantillasDisponiblesData },
   ] = await Promise.all([
     supabase
       .from('clientes')
@@ -61,6 +70,28 @@ export default async function ClienteDetallePage({
       .order('created_at', { ascending: true }),
     supabase
       .from('servicios')
+      .select('id, nombre')
+      .eq('estado', 'activo')
+      .order('nombre', { ascending: true }),
+    supabase
+      .from('obligaciones_fiscales_cliente')
+      .select(
+        'id, obligacion_fiscal_id, periodicidad_id, orden, estado, observaciones, obligaciones_fiscales(nombre), periodicidades(nombre)',
+      )
+      .eq('cliente_id', clienteId)
+      .order('orden', { ascending: true }),
+    supabase
+      .from('obligaciones_fiscales')
+      .select('id, nombre')
+      .eq('estado', 'activo')
+      .order('nombre', { ascending: true }),
+    supabase
+      .from('periodicidades')
+      .select('id, nombre')
+      .eq('estado', 'activo')
+      .order('nombre', { ascending: true }),
+    supabase
+      .from('plantillas_obligaciones')
       .select('id, nombre')
       .eq('estado', 'activo')
       .order('nombre', { ascending: true }),
@@ -107,6 +138,34 @@ export default async function ClienteDetallePage({
     nombre: row.nombre,
   }))
 
+  const obligacionesFiscales = (obligacionesFiscalesClienteData ?? []).map((row) => ({
+    id: row.id,
+    obligacionFiscalId: row.obligacion_fiscal_id,
+    obligacionFiscalNombre: row.obligaciones_fiscales?.nombre ?? '',
+    periodicidadId: row.periodicidad_id,
+    periodicidadNombre: row.periodicidades?.nombre ?? '',
+    orden: row.orden,
+    estado: row.estado,
+    observaciones: row.observaciones,
+  }))
+
+  const obligacionesFiscalesDisponibles = (obligacionesFiscalesDisponiblesData ?? []).map(
+    (row) => ({
+      id: row.id,
+      nombre: row.nombre,
+    }),
+  )
+
+  const periodicidadesDisponibles = (periodicidadesDisponiblesData ?? []).map((row) => ({
+    id: row.id,
+    nombre: row.nombre,
+  }))
+
+  const plantillasDisponibles = (plantillasDisponiblesData ?? []).map((row) => ({
+    id: row.id,
+    nombre: row.nombre,
+  }))
+
   const canManage = currentProfile.capabilities.includes('manage_clients')
 
   return (
@@ -130,6 +189,18 @@ export default async function ClienteDetallePage({
         onReactivarServicio={reactivarServicioContratado.bind(null, clienteId)}
         onFinalizarServicio={finalizarServicioContratado.bind(null, clienteId)}
         onObtenerHistorialServicio={obtenerHistorialServicioContratado}
+        obligacionesFiscales={obligacionesFiscales}
+        obligacionesFiscalesDisponibles={obligacionesFiscalesDisponibles}
+        periodicidadesDisponibles={periodicidadesDisponibles}
+        plantillasDisponibles={plantillasDisponibles}
+        onAgregarObligacionFiscal={agregarObligacionFiscalCliente.bind(null, clienteId)}
+        onEditarObligacionFiscal={editarObligacionFiscalCliente.bind(null, clienteId)}
+        onMarcarNoAplicaObligacionFiscal={marcarNoAplicaObligacionFiscalCliente.bind(
+          null,
+          clienteId,
+        )}
+        onEliminarObligacionFiscal={eliminarObligacionFiscalCliente.bind(null, clienteId)}
+        onAplicarPlantillaObligaciones={aplicarPlantillaObligaciones.bind(null, clienteId)}
       />
     </Container>
   )

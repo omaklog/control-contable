@@ -448,6 +448,70 @@ export type Database = {
           },
         ]
       }
+      obligaciones_fiscales_cliente: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          created_by: string | null
+          estado: Database['public']['Enums']['obligacion_fiscal_cliente_estado']
+          id: string
+          obligacion_fiscal_id: string
+          observaciones: string | null
+          orden: number
+          periodicidad_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          created_by?: string | null
+          estado?: Database['public']['Enums']['obligacion_fiscal_cliente_estado']
+          id?: string
+          obligacion_fiscal_id: string
+          observaciones?: string | null
+          orden: number
+          periodicidad_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          created_by?: string | null
+          estado?: Database['public']['Enums']['obligacion_fiscal_cliente_estado']
+          id?: string
+          obligacion_fiscal_id?: string
+          observaciones?: string | null
+          orden?: number
+          periodicidad_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'obligaciones_fiscales_cliente_cliente_id_fkey'
+            columns: ['cliente_id']
+            isOneToOne: false
+            referencedRelation: 'clientes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'obligaciones_fiscales_cliente_obligacion_fiscal_id_fkey'
+            columns: ['obligacion_fiscal_id']
+            isOneToOne: false
+            referencedRelation: 'obligaciones_fiscales'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'obligaciones_fiscales_cliente_periodicidad_id_fkey'
+            columns: ['periodicidad_id']
+            isOneToOne: false
+            referencedRelation: 'periodicidades'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       pagos: {
         Row: {
           cliente_id: string
@@ -566,6 +630,91 @@ export type Database = {
             referencedColumns: ['id']
           },
         ]
+      }
+      plantilla_obligaciones_items: {
+        Row: {
+          created_at: string
+          id: string
+          obligacion_fiscal_id: string
+          orden: number
+          periodicidad_id: string
+          plantilla_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          obligacion_fiscal_id: string
+          orden: number
+          periodicidad_id: string
+          plantilla_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          obligacion_fiscal_id?: string
+          orden?: number
+          periodicidad_id?: string
+          plantilla_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'plantilla_obligaciones_items_obligacion_fiscal_id_fkey'
+            columns: ['obligacion_fiscal_id']
+            isOneToOne: false
+            referencedRelation: 'obligaciones_fiscales'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'plantilla_obligaciones_items_periodicidad_id_fkey'
+            columns: ['periodicidad_id']
+            isOneToOne: false
+            referencedRelation: 'periodicidades'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'plantilla_obligaciones_items_plantilla_id_fkey'
+            columns: ['plantilla_id']
+            isOneToOne: false
+            referencedRelation: 'plantillas_obligaciones'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      plantillas_obligaciones: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          descripcion: string | null
+          estado: Database['public']['Enums']['plantilla_obligaciones_estado']
+          id: string
+          nombre: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string | null
+          estado?: Database['public']['Enums']['plantilla_obligaciones_estado']
+          id?: string
+          nombre: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string | null
+          estado?: Database['public']['Enums']['plantilla_obligaciones_estado']
+          id?: string
+          nombre?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       profile_change_history: {
         Row: {
@@ -832,6 +981,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      aplicar_plantilla_obligaciones: {
+        Args: { p_cliente_id: string; p_plantilla_id: string }
+        Returns: undefined
+      }
       clear_must_change_password: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -864,8 +1017,10 @@ export type Database = {
       cliente_estado: 'activo' | 'inactivo'
       contacto_estado: 'activo' | 'obsoleto'
       documento_estado: 'activo' | 'reemplazado'
+      obligacion_fiscal_cliente_estado: 'activa' | 'no_aplica'
       obligacion_fiscal_estado: 'activo' | 'inactivo'
       periodicidad_estado: 'activo' | 'inactivo'
+      plantilla_obligaciones_estado: 'activo' | 'inactivo'
       servicio_contratado_estado: 'activo' | 'suspendido' | 'finalizado'
       servicio_estado: 'activo' | 'inactivo'
       tipo_persona: 'fisica' | 'moral'
@@ -1518,8 +1673,10 @@ export const Constants = {
       cliente_estado: ['activo', 'inactivo'],
       contacto_estado: ['activo', 'obsoleto'],
       documento_estado: ['activo', 'reemplazado'],
+      obligacion_fiscal_cliente_estado: ['activa', 'no_aplica'],
       obligacion_fiscal_estado: ['activo', 'inactivo'],
       periodicidad_estado: ['activo', 'inactivo'],
+      plantilla_obligaciones_estado: ['activo', 'inactivo'],
       servicio_contratado_estado: ['activo', 'suspendido', 'finalizado'],
       servicio_estado: ['activo', 'inactivo'],
       tipo_persona: ['fisica', 'moral'],

@@ -14,7 +14,7 @@
 
 Como Administrador, quiero dar de alta, editar, activar e inactivar obligaciones fiscales del catálogo, para tener listas las obligaciones reutilizables que luego servirán de base para las plantillas de obligaciones y las obligaciones fiscales de cada cliente.
 
-**Why this priority**: Es el catálogo base de todo el módulo — sin él, ningún consumidor futuro (Plantillas de Obligaciones, Obligaciones Fiscales del Cliente) tiene de dónde partir.
+**Why this priority**: Es el catálogo base de todo el módulo — sin él, ningún consumidor (Plantillas de Obligaciones y Obligaciones Fiscales del Cliente, ambos definidos en `014-obligaciones-fiscales-cliente`) tiene de dónde partir.
 
 **Independent Test**: Puede probarse creando, editando, activando y desactivando obligaciones del catálogo, y filtrando el listado por nombre/periodicidad/estado, sin que exista todavía ninguna plantilla ni obligación fiscal de cliente.
 
@@ -97,8 +97,8 @@ Como Administrador, quiero buscar obligaciones por nombre y seguir viendo las qu
 ## Assumptions
 
 - "Obligación Fiscal", mencionado en la descripción original junto con Nombre/Descripción/Periodicidad/Prioridad/Estado, se interpreta como el nombre de la propia entidad (el encabezado de la lista de atributos), no como un atributo adicional a capturar.
-- La periodicidad y la prioridad definidas aquí son solo el valor sugerido inicial para consumidores futuros (Plantillas de Obligaciones); este módulo únicamente los almacena — no implementa ese consumo, que queda para su propia especificación futura.
+- La periodicidad y la prioridad definidas aquí son solo el valor sugerido inicial para sus consumidores (Plantillas de Obligaciones y Obligaciones Fiscales del Cliente, `014-obligaciones-fiscales-cliente`); este módulo únicamente los almacena — no implementa ese consumo.
 - El catálogo se incorpora como una nueva entrada dentro del punto único de navegación "Administración > Catálogos" (`012-administracion-catalogos`), igual que Periodicidades — a diferencia de Servicios (`011-gestion-servicios`), que ya existía antes de que ese contrato existiera y por eso conserva su propia pantalla independiente.
 - Cualquier persona del despacho con sesión activa puede consultar el catálogo; solo Administrador puede darlo de alta, editarlo, activarlo o inactivarlo — mismo patrón de permisos ya usado por Servicios (`011`) y Periodicidades (`012`).
 - La prioridad es un valor numérico que no necesita ser único entre obligaciones; si no se indica uno al crear la obligación, el sistema sugiere un valor por defecto razonable, modificable en cualquier momento.
-- Plantillas de Obligaciones y Obligaciones Fiscales del Cliente, mencionados como consumidores futuros de este catálogo, no se construyen como parte de este módulo.
+- Plantillas de Obligaciones y Obligaciones Fiscales del Cliente son consumidores de este catálogo, definidos en su propia especificación (`014-obligaciones-fiscales-cliente`) — no se construyen como parte de este módulo.

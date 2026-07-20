@@ -4,8 +4,10 @@ import { requireCapability } from '@control-contable/auth'
 import { createServerSupabaseClient } from '@control-contable/supabase-client/server'
 import {
   mapearErrorContactoAMensaje,
+  mapearErrorObligacionFiscalClienteAMensaje,
   mapearErrorServicioContratadoAMensaje,
   type ContactoFormValues,
+  type ObligacionFiscalClienteFormValues,
   type ServicioContratadoFormValues,
 } from '@control-contable/utils'
 import { revalidatePath } from 'next/cache'
@@ -303,4 +305,152 @@ export interface HistorialEvento {
   accion: string
   detalle: unknown
   creadoEn: string
+}
+
+/**
+ * Gestión de Obligaciones Fiscales del Cliente desde la página de detalle de
+ * Cliente (014-obligaciones-fiscales-cliente, Historia 1). Como máximo una
+ * obligación por combinación cliente+obligación (FR-003, restricción
+ * `UNIQUE`); el orden es único por cliente (FR-008). A diferencia de
+ * Servicios Contratados, esta es la única entidad del sistema con
+ * eliminación física real, y solo cuando la obligación está Activa
+ * (FR-005/FR-006) — la política RLS de `delete` la bloquea en silencio
+ * (sin error, 0 filas afectadas) cuando está en estado "No aplica".
+ */
+export async function agregarObligacionFiscalCliente(
+  clienteId: string,
+  values: ObligacionFiscalClienteFormValues,
+): Promise<ActionResult> {
+  await requireCapability('manage_clients')
+  const supabase = await createServerSupabaseClient()
+
+  const { error } = await supabase.from('obligaciones_fiscales_cliente').insert({
+    cliente_id: clienteId,
+    obligacion_fiscal_id: values.obligacionFiscalId,
+    periodicidad_id: values.periodicidadId,
+    orden: Number(values.orden),
+    observaciones: values.observaciones.trim() || null,
+  })
+
+  if (error) {
+    return { error: mapearErrorObligacionFiscalClienteAMensaje(error) }
+  }
+
+  revalidatePath(`/clientes/${clienteId}`)
+  return { error: null }
+}
+
+/**
+ * Edita periodicidad/orden/observaciones de una obligación fiscal ya
+ * asignada a un cliente (FR-007) — la obligación fiscal en sí no cambia
+ * (identidad cliente+obligación fija, FR-003).
+ */
+export async function editarObligacionFiscalCliente(
+  clienteId: string,
+  obligacionFiscalClienteId: string,
+  values: ObligacionFiscalClienteFormValues,
+): Promise<ActionResult> {
+  await requireCapability('manage_clients')
+  const supabase = await createServerSupabaseClient()
+
+  const { error } = await supabase
+    .from('obligaciones_fiscales_cliente')
+    .update({
+      periodicidad_id: values.periodicidadId,
+      orden: Number(values.orden),
+      observaciones: values.observaciones.trim() || null,
+    })
+    .eq('id', obligacionFiscalClienteId)
+
+  if (error) {
+    return { error: mapearErrorObligacionFiscalClienteAMensaje(error) }
+  }
+
+  revalidatePath(`/clientes/${clienteId}`)
+  return { error: null }
+}
+
+/**
+ * Marca una obligación fiscal del cliente como "No aplica" (FR-004): deja de
+ * contar como vigente, pero permanece registrada por motivos históricos
+ * (FR-005) — a partir de aquí ya no puede eliminarse (ver
+ * eliminarObligacionFiscalCliente).
+ */
+export async function marcarNoAplicaObligacionFiscalCliente(
+  clienteId: string,
+  obligacionFiscalClienteId: string,
+): Promise<ActionResult> {
+  await requireCapability('manage_clients')
+  const supabase = await createServerSupabaseClient()
+
+  const { error } = await supabase
+    .from('obligaciones_fiscales_cliente')
+    .update({ estado: 'no_aplica' })
+    .eq('id', obligacionFiscalClienteId)
+
+  if (error) {
+    return { error: mapearErrorObligacionFiscalClienteAMensaje(error) }
+  }
+
+  revalidatePath(`/clientes/${clienteId}`)
+  return { error: null }
+}
+
+/**
+ * Elimina físicamente una obligación fiscal Activa del cliente (FR-006) — la
+ * única eliminación real del sistema. La política RLS
+ * `obligaciones_fiscales_cliente_delete_manage_clients_activa` la bloquea en
+ * silencio (0 filas afectadas, sin error) si la obligación ya está "No
+ * aplica" (FR-005); por eso se verifica `count` explícitamente.
+ */
+export async function eliminarObligacionFiscalCliente(
+  clienteId: string,
+  obligacionFiscalClienteId: string,
+): Promise<ActionResult> {
+  await requireCapability('manage_clients')
+  const supabase = await createServerSupabaseClient()
+
+  const { error, count } = await supabase
+    .from('obligaciones_fiscales_cliente')
+    .delete({ count: 'exact' })
+    .eq('id', obligacionFiscalClienteId)
+
+  if (error) {
+    return { error: mapearErrorObligacionFiscalClienteAMensaje(error) }
+  }
+  if (!count) {
+    return {
+      error: 'No se pudo eliminar: esta obligación fiscal ya no está Activa o no existe.',
+    }
+  }
+
+  revalidatePath(`/clientes/${clienteId}`)
+  return { error: null }
+}
+
+/**
+ * Aplica una plantilla de obligaciones al cliente (Historia 3, FR-014):
+ * copia sus ítems como nuevas Obligaciones Fiscales del Cliente vía el RPC
+ * `aplicar_plantilla_obligaciones`, omitiendo las que el cliente ya tenga
+ * configuradas (FR-015) sin conservar ninguna relación con la plantilla
+ * después de la copia (FR-014/FR-016).
+ */
+export async function aplicarPlantillaObligaciones(
+  clienteId: string,
+  plantillaId: string,
+): Promise<ActionResult> {
+  await requireCapability('manage_clients')
+  const supabase = await createServerSupabaseClient()
+
+  const { error } = await supabase.rpc('aplicar_plantilla_obligaciones', {
+    p_cliente_id: clienteId,
+    p_plantilla_id: plantillaId,
+  })
+
+  if (error) {
+    return { error: 'No se pudo aplicar la plantilla. Inténtalo de nuevo.' }
+  }
+
+  revalidatePath(`/clientes/${clienteId}`)
+  return { error: null }
 }

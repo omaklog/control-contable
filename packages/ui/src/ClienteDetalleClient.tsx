@@ -1,7 +1,9 @@
 'use client'
 
 import type { ContactoFormValues, ServicioContratadoFormValues } from '@control-contable/utils'
+import type { ObligacionFiscalClienteFormValues } from '@control-contable/utils'
 import Alert from '@mui/material/Alert'
+import Autocomplete from '@mui/material/Autocomplete'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
@@ -18,11 +20,13 @@ import TableBody from '@mui/material/TableBody'
 import TableCell from '@mui/material/TableCell'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
+import TextField from '@mui/material/TextField'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import AddIcon from '@mui/icons-material/Add'
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import HistoryIcon from '@mui/icons-material/History'
 import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline'
@@ -34,6 +38,11 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 
 import { ContactoForm } from './ContactoForm'
+import {
+  ObligacionFiscalClienteForm,
+  type ObligacionFiscalOption,
+  type PeriodicidadOption,
+} from './ObligacionFiscalClienteForm'
 import { ServicioContratadoForm, type ServicioOption } from './ServicioContratadoForm'
 import { ServicioHistorialDialog, type HistorialEvento } from './ServicioHistorialDialog'
 import { StatusChip } from './StatusChip'
@@ -70,6 +79,22 @@ export interface ServicioContratadoRow {
   observaciones: string | null
 }
 
+export interface ObligacionFiscalClienteRow {
+  id: string
+  obligacionFiscalId: string
+  obligacionFiscalNombre: string
+  periodicidadId: string
+  periodicidadNombre: string
+  orden: number
+  estado: 'activa' | 'no_aplica'
+  observaciones: string | null
+}
+
+export interface PlantillaObligacionesOption {
+  id: string
+  nombre: string
+}
+
 interface ActionResult {
   error: string | null
 }
@@ -99,6 +124,15 @@ export function ClienteDetalleClient({
   onReactivarServicio,
   onFinalizarServicio,
   onObtenerHistorialServicio,
+  obligacionesFiscales,
+  obligacionesFiscalesDisponibles,
+  periodicidadesDisponibles,
+  plantillasDisponibles,
+  onAgregarObligacionFiscal,
+  onEditarObligacionFiscal,
+  onMarcarNoAplicaObligacionFiscal,
+  onEliminarObligacionFiscal,
+  onAplicarPlantillaObligaciones,
 }: {
   cliente: ClienteDetalle
   contactos: ContactoRow[]
@@ -113,6 +147,18 @@ export function ClienteDetalleClient({
   onCambiarPrecioServicio: (servicioContratadoId: string, precio: number) => Promise<ActionResult>
   onSuspenderServicio: (servicioContratadoId: string) => Promise<ActionResult>
   onReactivarServicio: (servicioContratadoId: string) => Promise<ActionResult>
+  obligacionesFiscales: ObligacionFiscalClienteRow[]
+  obligacionesFiscalesDisponibles: ObligacionFiscalOption[]
+  periodicidadesDisponibles: PeriodicidadOption[]
+  plantillasDisponibles: PlantillaObligacionesOption[]
+  onAgregarObligacionFiscal: (values: ObligacionFiscalClienteFormValues) => Promise<ActionResult>
+  onEditarObligacionFiscal: (
+    obligacionFiscalClienteId: string,
+    values: ObligacionFiscalClienteFormValues,
+  ) => Promise<ActionResult>
+  onMarcarNoAplicaObligacionFiscal: (obligacionFiscalClienteId: string) => Promise<ActionResult>
+  onEliminarObligacionFiscal: (obligacionFiscalClienteId: string) => Promise<ActionResult>
+  onAplicarPlantillaObligaciones: (plantillaId: string) => Promise<ActionResult>
   onFinalizarServicio: (servicioContratadoId: string) => Promise<ActionResult>
   onObtenerHistorialServicio: (
     servicioContratadoId: string,
@@ -286,6 +332,87 @@ export function ClienteDetalleClient({
       return
     }
     setHistorialEventos(result.eventos)
+  }
+
+  const [obligacionFormMode, setObligacionFormMode] = useState<'agregar' | 'editar' | null>(null)
+  const [obligacionFormTarget, setObligacionFormTarget] =
+    useState<ObligacionFiscalClienteRow | null>(null)
+  const [obligacionFormError, setObligacionFormError] = useState<string | null>(null)
+  const [confirmEliminarObligacionId, setConfirmEliminarObligacionId] = useState<string | null>(
+    null,
+  )
+  const [plantillaSeleccionada, setPlantillaSeleccionada] =
+    useState<PlantillaObligacionesOption | null>(null)
+  const [plantillaError, setPlantillaError] = useState<string | null>(null)
+
+  function abrirAgregarObligacion() {
+    setObligacionFormError(null)
+    setObligacionFormTarget(null)
+    setObligacionFormMode('agregar')
+  }
+
+  function abrirEditarObligacion(obligacion: ObligacionFiscalClienteRow) {
+    setObligacionFormError(null)
+    setObligacionFormTarget(obligacion)
+    setObligacionFormMode('editar')
+  }
+
+  function handleGuardarObligacion(values: ObligacionFiscalClienteFormValues) {
+    setObligacionFormError(null)
+    startTransition(async () => {
+      const result =
+        obligacionFormMode === 'editar' && obligacionFormTarget
+          ? await onEditarObligacionFiscal(obligacionFormTarget.id, values)
+          : await onAgregarObligacionFiscal(values)
+      if (result.error) {
+        setObligacionFormError(result.error)
+        return
+      }
+      setObligacionFormMode(null)
+      setObligacionFormTarget(null)
+      router.refresh()
+    })
+  }
+
+  function marcarNoAplicaObligacion(obligacionFiscalClienteId: string) {
+    setGlobalError(null)
+    startTransition(async () => {
+      const result = await onMarcarNoAplicaObligacionFiscal(obligacionFiscalClienteId)
+      if (result.error) {
+        setGlobalError(result.error)
+        return
+      }
+      router.refresh()
+    })
+  }
+
+  function confirmarEliminarObligacion() {
+    if (!confirmEliminarObligacionId) return
+    const obligacionFiscalClienteId = confirmEliminarObligacionId
+    setConfirmEliminarObligacionId(null)
+    setGlobalError(null)
+    startTransition(async () => {
+      const result = await onEliminarObligacionFiscal(obligacionFiscalClienteId)
+      if (result.error) {
+        setGlobalError(result.error)
+        return
+      }
+      router.refresh()
+    })
+  }
+
+  function aplicarPlantilla() {
+    if (!plantillaSeleccionada) return
+    setPlantillaError(null)
+    startTransition(async () => {
+      const result = await onAplicarPlantillaObligaciones(plantillaSeleccionada.id)
+      if (result.error) {
+        setPlantillaError(result.error)
+        return
+      }
+      setPlantillaSeleccionada(null)
+      router.refresh()
+    })
   }
 
   return (
@@ -615,6 +742,142 @@ export function ClienteDetalleClient({
       </Paper>
 
       <Paper sx={{ p: 3 }}>
+        {plantillaError ? (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {plantillaError}
+          </Alert>
+        ) : null}
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 2,
+            mb: 2,
+          }}
+        >
+          <Typography variant="h6">Obligaciones Fiscales</Typography>
+          {canManage ? (
+            <Button variant="contained" startIcon={<AddIcon />} onClick={abrirAgregarObligacion}>
+              Agregar obligación
+            </Button>
+          ) : null}
+        </Box>
+
+        {canManage ? (
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2, mb: 2 }}>
+            <Autocomplete
+              options={plantillasDisponibles}
+              getOptionLabel={(option) => option.nombre}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              value={plantillaSeleccionada}
+              onChange={(_event, value) => setPlantillaSeleccionada(value)}
+              sx={{ minWidth: 260 }}
+              renderInput={({ InputLabelProps, InputProps, size: _size, ...rest }) => (
+                <TextField
+                  {...rest}
+                  slotProps={{ inputLabel: InputLabelProps, input: InputProps }}
+                  label="Seleccionar plantilla"
+                  size="small"
+                />
+              )}
+            />
+            <Button
+              variant="outlined"
+              disabled={!plantillaSeleccionada || isPending}
+              onClick={aplicarPlantilla}
+            >
+              Aplicar
+            </Button>
+          </Box>
+        ) : null}
+
+        {obligacionesFiscales.length === 0 ? (
+          <Typography color="text.secondary">
+            Este cliente no tiene obligaciones fiscales configuradas todavía.
+          </Typography>
+        ) : (
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Obligación</TableCell>
+                <TableCell>Periodicidad</TableCell>
+                <TableCell>Orden</TableCell>
+                <TableCell>Estado</TableCell>
+                <TableCell>Observaciones</TableCell>
+                {canManage ? <TableCell>Acciones</TableCell> : null}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {obligacionesFiscales.map((obligacion) => (
+                <TableRow key={obligacion.id} hover>
+                  <TableCell>{obligacion.obligacionFiscalNombre}</TableCell>
+                  <TableCell>{obligacion.periodicidadNombre}</TableCell>
+                  <TableCell>{obligacion.orden}</TableCell>
+                  <TableCell>
+                    <StatusChip
+                      status={obligacion.estado}
+                      variant={obligacion.estado === 'activa' ? 'positivo' : 'neutro'}
+                      label={obligacion.estado === 'activa' ? 'Activa' : 'No aplica'}
+                    />
+                  </TableCell>
+                  <TableCell>{obligacion.observaciones || '—'}</TableCell>
+                  {canManage ? (
+                    <TableCell>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Tooltip title="Editar obligación">
+                          <span>
+                            <IconButton
+                              size="small"
+                              disabled={isPending}
+                              onClick={() => abrirEditarObligacion(obligacion)}
+                              aria-label="Editar obligación"
+                            >
+                              <EditOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                        {obligacion.estado === 'activa' ? (
+                          <Tooltip title="Marcar No aplica">
+                            <span>
+                              <IconButton
+                                size="small"
+                                disabled={isPending}
+                                onClick={() => marcarNoAplicaObligacion(obligacion.id)}
+                                aria-label="Marcar No aplica"
+                              >
+                                <BlockIcon fontSize="small" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        ) : null}
+                        {obligacion.estado === 'activa' ? (
+                          <Tooltip title="Eliminar">
+                            <span>
+                              <IconButton
+                                size="small"
+                                color="error"
+                                disabled={isPending}
+                                onClick={() => setConfirmEliminarObligacionId(obligacion.id)}
+                                aria-label="Eliminar obligación"
+                              >
+                                <DeleteOutlineIcon fontSize="small" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        ) : null}
+                      </Box>
+                    </TableCell>
+                  ) : null}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Paper>
+
+      <Paper sx={{ p: 3 }}>
         <Typography variant="h6" gutterBottom>
           Pagos pendientes
         </Typography>
@@ -683,6 +946,50 @@ export function ClienteDetalleClient({
         eventos={historialEventos}
         error={historialError}
       />
+
+      <ObligacionFiscalClienteForm
+        open={obligacionFormMode !== null}
+        mode={obligacionFormMode ?? 'agregar'}
+        obligacionFiscalNombre={obligacionFormTarget?.obligacionFiscalNombre}
+        valoresIniciales={
+          obligacionFormTarget
+            ? {
+                obligacionFiscalId: obligacionFormTarget.obligacionFiscalId,
+                periodicidadId: obligacionFormTarget.periodicidadId,
+                orden: String(obligacionFormTarget.orden),
+                observaciones: obligacionFormTarget.observaciones ?? '',
+              }
+            : undefined
+        }
+        obligacionesFiscalesDisponibles={obligacionesFiscalesDisponibles}
+        periodicidadesDisponibles={periodicidadesDisponibles}
+        error={obligacionFormError}
+        onClose={() => {
+          setObligacionFormMode(null)
+          setObligacionFormTarget(null)
+        }}
+        onSubmit={handleGuardarObligacion}
+      />
+
+      <Dialog
+        open={Boolean(confirmEliminarObligacionId)}
+        onClose={() => setConfirmEliminarObligacionId(null)}
+      >
+        <DialogTitle>Eliminar obligación fiscal</DialogTitle>
+        <DialogContent>
+          <Typography>
+            ¿Seguro que deseas eliminar esta obligación fiscal del cliente? Esta acción no se puede
+            deshacer. Si prefieres conservar un registro histórico, márcala como "No aplica" en vez
+            de eliminarla.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmEliminarObligacionId(null)}>Cancelar</Button>
+          <Button variant="contained" color="error" onClick={confirmarEliminarObligacion}>
+            Confirmar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }

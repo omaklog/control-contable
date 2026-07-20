@@ -3,6 +3,8 @@ export {
   type ClienteDetalle,
   type ContactoRow,
   type ServicioContratadoRow,
+  type ObligacionFiscalClienteRow,
+  type PlantillaObligacionesOption,
 } from './ClienteDetalleClient'
 export { ClienteForm } from './ClienteForm'
 export { ContactoForm } from './ContactoForm'
@@ -13,6 +15,11 @@ export { type MenuItem, visibleMenuItems } from './navigation'
 export { SetNewPasswordForm, type SetNewPasswordFormProps } from './SetNewPasswordForm'
 export { ServicioContratadoForm, type ServicioOption } from './ServicioContratadoForm'
 export { ServicioHistorialDialog, type HistorialEvento } from './ServicioHistorialDialog'
+export {
+  ObligacionFiscalClienteForm,
+  type ObligacionFiscalOption,
+  type PeriodicidadOption,
+} from './ObligacionFiscalClienteForm'
 export { lightTheme, darkTheme, ColorModeProvider, useColorMode } from './theme'
 export {
   StatusChip,
