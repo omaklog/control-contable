@@ -401,6 +401,53 @@ export type Database = {
         }
         Relationships: []
       }
+      obligaciones_fiscales: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          descripcion: string | null
+          estado: Database['public']['Enums']['obligacion_fiscal_estado']
+          id: string
+          nombre: string
+          periodicidad_id: string
+          prioridad: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string | null
+          estado?: Database['public']['Enums']['obligacion_fiscal_estado']
+          id?: string
+          nombre: string
+          periodicidad_id: string
+          prioridad: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string | null
+          estado?: Database['public']['Enums']['obligacion_fiscal_estado']
+          id?: string
+          nombre?: string
+          periodicidad_id?: string
+          prioridad?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'obligaciones_fiscales_periodicidad_id_fkey'
+            columns: ['periodicidad_id']
+            isOneToOne: false
+            referencedRelation: 'periodicidades'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       pagos: {
         Row: {
           cliente_id: string
@@ -817,6 +864,7 @@ export type Database = {
       cliente_estado: 'activo' | 'inactivo'
       contacto_estado: 'activo' | 'obsoleto'
       documento_estado: 'activo' | 'reemplazado'
+      obligacion_fiscal_estado: 'activo' | 'inactivo'
       periodicidad_estado: 'activo' | 'inactivo'
       servicio_contratado_estado: 'activo' | 'suspendido' | 'finalizado'
       servicio_estado: 'activo' | 'inactivo'
@@ -1470,6 +1518,7 @@ export const Constants = {
       cliente_estado: ['activo', 'inactivo'],
       contacto_estado: ['activo', 'obsoleto'],
       documento_estado: ['activo', 'reemplazado'],
+      obligacion_fiscal_estado: ['activo', 'inactivo'],
       periodicidad_estado: ['activo', 'inactivo'],
       servicio_contratado_estado: ['activo', 'suspendido', 'finalizado'],
       servicio_estado: ['activo', 'inactivo'],

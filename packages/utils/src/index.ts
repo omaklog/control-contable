@@ -24,3 +24,8 @@ export {
   mapearErrorServicioContratadoAMensaje,
   type ServicioContratadoFormValues,
 } from './servicioContratadoForm'
+export {
+  obligacionFiscalFormSchema,
+  mapearErrorObligacionFiscalAMensaje,
+  type ObligacionFiscalFormValues,
+} from './obligacionFiscalForm'
