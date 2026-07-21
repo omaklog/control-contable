@@ -33,10 +33,10 @@ describe('MENU_ITEMS (apps/portal)', () => {
     expect(documentosFiscales?.implemented).toBe(false)
   })
 
-  it('"Obligaciones Fiscales" no tiene capacidad todavía (módulo sin especificar)', () => {
+  it('"Obligaciones Fiscales" ya está implementado (015-control-cumplimiento-fiscal), restringido a view_clients', () => {
     const obligacionesFiscales = MENU_ITEMS.find((item) => item.label === 'Obligaciones Fiscales')
-    expect(obligacionesFiscales?.capability).toBeUndefined()
-    expect(obligacionesFiscales?.implemented).toBe(false)
+    expect(obligacionesFiscales?.capability).toBe('view_clients')
+    expect(obligacionesFiscales?.implemented).toBe(true)
   })
 
   it('no conserva las entradas ya superadas (Expedientes Digitales/Recibos de Honorarios/Reportes)', () => {

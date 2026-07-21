@@ -12,8 +12,9 @@ import PeopleIcon from '@mui/icons-material/People'
  * `capability: 'manage_clients'` desde 007-alta-cliente-portal; "Cobranza" y
  * "Documentos Fiscales" reusan las capacidades `view_billing`/`view_documents`
  * ya existentes en `packages/auth` (FR-007) aunque todavía no tengan página
- * propia; "Obligaciones Fiscales" no tiene capacidad todavía (no existe ese
- * módulo). `MenuItem` y `visibleMenuItems` viven en `@control-contable/ui`
+ * propia; "Obligaciones Fiscales" ya implementa la bandeja de Control de
+ * Cumplimiento Fiscal (015-control-cumplimiento-fiscal, research.md #8).
+ * `MenuItem` y `visibleMenuItems` viven en `@control-contable/ui`
  * (compartidos con apps/admin, ver 004-portal-main-layout, FR-010).
  */
 export const MENU_ITEMS: MenuItem[] = [
@@ -43,6 +44,7 @@ export const MENU_ITEMS: MenuItem[] = [
     label: 'Obligaciones Fiscales',
     href: '/obligaciones-fiscales',
     icon: FactCheckIcon,
-    implemented: false,
+    capability: 'view_clients',
+    implemented: true,
   },
 ]

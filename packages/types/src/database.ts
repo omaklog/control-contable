@@ -292,6 +292,127 @@ export type Database = {
           },
         ]
       }
+      cumplimiento_fiscal_documentos: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          cumplimiento_id: string
+          documento_id: string
+          es_acuse: boolean
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          cumplimiento_id: string
+          documento_id: string
+          es_acuse?: boolean
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          cumplimiento_id?: string
+          documento_id?: string
+          es_acuse?: boolean
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'cumplimiento_fiscal_documentos_cumplimiento_id_fkey'
+            columns: ['cumplimiento_id']
+            isOneToOne: false
+            referencedRelation: 'cumplimientos_fiscales'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'cumplimiento_fiscal_documentos_documento_id_fkey'
+            columns: ['documento_id']
+            isOneToOne: false
+            referencedRelation: 'documentos'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      cumplimientos_fiscales: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          created_by: string | null
+          descripcion: string | null
+          es_extraordinario: boolean
+          estado: Database['public']['Enums']['cumplimiento_fiscal_estado']
+          fecha_limite: string
+          id: string
+          obligacion_fiscal_cliente_id: string | null
+          obligacion_fiscal_id: string | null
+          periodo_etiqueta: string
+          periodo_fin: string
+          periodo_inicio: string
+          responsable_id: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string | null
+          es_extraordinario?: boolean
+          estado?: Database['public']['Enums']['cumplimiento_fiscal_estado']
+          fecha_limite: string
+          id?: string
+          obligacion_fiscal_cliente_id?: string | null
+          obligacion_fiscal_id?: string | null
+          periodo_etiqueta: string
+          periodo_fin: string
+          periodo_inicio: string
+          responsable_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string | null
+          es_extraordinario?: boolean
+          estado?: Database['public']['Enums']['cumplimiento_fiscal_estado']
+          fecha_limite?: string
+          id?: string
+          obligacion_fiscal_cliente_id?: string | null
+          obligacion_fiscal_id?: string | null
+          periodo_etiqueta?: string
+          periodo_fin?: string
+          periodo_inicio?: string
+          responsable_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'cumplimientos_fiscales_cliente_id_fkey'
+            columns: ['cliente_id']
+            isOneToOne: false
+            referencedRelation: 'clientes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'cumplimientos_fiscales_obligacion_fiscal_cliente_id_fkey'
+            columns: ['obligacion_fiscal_cliente_id']
+            isOneToOne: false
+            referencedRelation: 'obligaciones_fiscales_cliente'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'cumplimientos_fiscales_obligacion_fiscal_id_fkey'
+            columns: ['obligacion_fiscal_id']
+            isOneToOne: false
+            referencedRelation: 'obligaciones_fiscales'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       documentos: {
         Row: {
           cargado_por: string
@@ -985,9 +1106,20 @@ export type Database = {
         Args: { p_cliente_id: string; p_plantilla_id: string }
         Returns: undefined
       }
+      calcular_periodo_fiscal: {
+        Args: { p_fecha: string; p_periodicidad_nombre: string }
+        Returns: {
+          periodo_fin: string
+          periodo_inicio: string
+        }[]
+      }
       clear_must_change_password: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      generar_cumplimientos_fiscales: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       get_auth_audit_log: {
         Args: { limit_rows?: number }
@@ -1016,6 +1148,7 @@ export type Database = {
       cargo_estado: 'pendiente' | 'pagado' | 'vencido' | 'cancelado'
       cliente_estado: 'activo' | 'inactivo'
       contacto_estado: 'activo' | 'obsoleto'
+      cumplimiento_fiscal_estado: 'pendiente' | 'en_proceso' | 'presentada' | 'no_aplica'
       documento_estado: 'activo' | 'reemplazado'
       obligacion_fiscal_cliente_estado: 'activa' | 'no_aplica'
       obligacion_fiscal_estado: 'activo' | 'inactivo'
@@ -1672,6 +1805,7 @@ export const Constants = {
       cargo_estado: ['pendiente', 'pagado', 'vencido', 'cancelado'],
       cliente_estado: ['activo', 'inactivo'],
       contacto_estado: ['activo', 'obsoleto'],
+      cumplimiento_fiscal_estado: ['pendiente', 'en_proceso', 'presentada', 'no_aplica'],
       documento_estado: ['activo', 'reemplazado'],
       obligacion_fiscal_cliente_estado: ['activa', 'no_aplica'],
       obligacion_fiscal_estado: ['activo', 'inactivo'],

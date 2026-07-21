@@ -42,3 +42,8 @@ export {
   type PlantillaObligacionesFormValues,
   type PlantillaItemFormValues,
 } from './plantillaObligacionesForm'
+export {
+  cumplimientoExtraordinarioFormSchema,
+  mapearErrorCumplimientoFiscalAMensaje,
+  type CumplimientoExtraordinarioFormValues,
+} from './cumplimientoFiscalForm'
