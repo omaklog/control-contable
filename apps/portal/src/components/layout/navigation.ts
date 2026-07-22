@@ -9,14 +9,13 @@ import PeopleIcon from '@mui/icons-material/People'
  * Entradas del menú de navegación del portal, alineadas a la arquitectura de
  * información vigente (docs/ux/design-system.md §2.2, no al listado plano
  * original de 004-portal-main-layout/spec.md FR-006). "Clientes" ya tiene
- * `capability: 'manage_clients'` desde 007-alta-cliente-portal; "Cobranza"
- * reusa la capacidad `view_billing` ya existente en `packages/auth` (FR-007)
- * aunque todavía no tenga página propia; "Obligaciones Fiscales" ya
- * implementa la bandeja de Control de Cumplimiento Fiscal
+ * `capability: 'manage_clients'` desde 007-alta-cliente-portal; "Obligaciones
+ * Fiscales" ya implementa la bandeja de Control de Cumplimiento Fiscal
  * (015-control-cumplimiento-fiscal, research.md #8); "Documentos Fiscales"
  * ya implementa la vista global de Expedientes (016-expediente-fiscal,
- * research.md Decisión 10). `MenuItem` y `visibleMenuItems` viven en
- * `@control-contable/ui` (compartidos con apps/admin, ver
+ * research.md Decisión 10); "Cobranza" ya implementa la bandeja de Cobranza
+ * (017-cobranza, research.md Decisión 9). `MenuItem` y `visibleMenuItems`
+ * viven en `@control-contable/ui` (compartidos con apps/admin, ver
  * 004-portal-main-layout, FR-010).
  */
 export const MENU_ITEMS: MenuItem[] = [
@@ -33,7 +32,7 @@ export const MENU_ITEMS: MenuItem[] = [
     href: '/cobranza',
     icon: PaymentsIcon,
     capability: 'view_billing',
-    implemented: false,
+    implemented: true,
   },
   {
     label: 'Documentos Fiscales',

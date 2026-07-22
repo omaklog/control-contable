@@ -24,10 +24,10 @@ describe('MENU_ITEMS (apps/portal)', () => {
     ])
   })
 
-  it('"Cobranza" reusa una capacidad existente de packages/auth (FR-007) pero no tiene página propia todavía', () => {
+  it('"Cobranza" ya está implementado (017-cobranza), restringido a view_billing', () => {
     const cobranza = MENU_ITEMS.find((item) => item.label === 'Cobranza')
     expect(cobranza?.capability).toBe('view_billing')
-    expect(cobranza?.implemented).toBe(false)
+    expect(cobranza?.implemented).toBe(true)
   })
 
   it('"Obligaciones Fiscales" ya está implementado (015-control-cumplimiento-fiscal), restringido a view_clients', () => {

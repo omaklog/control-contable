@@ -58,47 +58,15 @@ export type Database = {
         }
         Relationships: []
       }
-      cargo_pagos: {
-        Row: {
-          cargo_id: string
-          monto_aplicado: number
-          pago_id: string
-        }
-        Insert: {
-          cargo_id: string
-          monto_aplicado: number
-          pago_id: string
-        }
-        Update: {
-          cargo_id?: string
-          monto_aplicado?: number
-          pago_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: 'cargo_pagos_cargo_id_fkey'
-            columns: ['cargo_id']
-            isOneToOne: false
-            referencedRelation: 'cargos_cobranza'
-            referencedColumns: ['id']
-          },
-          {
-            foreignKeyName: 'cargo_pagos_pago_id_fkey'
-            columns: ['pago_id']
-            isOneToOne: false
-            referencedRelation: 'pagos'
-            referencedColumns: ['id']
-          },
-        ]
-      }
-      cargos_cobranza: {
+      cargos_extraordinarios: {
         Row: {
           cliente_id: string
-          concepto: string
+          concepto_cobranza_id: string | null
           created_at: string
           created_by: string | null
-          estado: Database['public']['Enums']['cargo_estado']
-          fecha_vencimiento: string
+          descripcion: string
+          estado: Database['public']['Enums']['cargo_extraordinario_estado']
+          fecha_registro: string
           id: string
           monto: number
           periodo_anio: number
@@ -108,11 +76,12 @@ export type Database = {
         }
         Insert: {
           cliente_id: string
-          concepto: string
+          concepto_cobranza_id?: string | null
           created_at?: string
           created_by?: string | null
-          estado?: Database['public']['Enums']['cargo_estado']
-          fecha_vencimiento: string
+          descripcion: string
+          estado?: Database['public']['Enums']['cargo_extraordinario_estado']
+          fecha_registro?: string
           id?: string
           monto: number
           periodo_anio: number
@@ -122,11 +91,12 @@ export type Database = {
         }
         Update: {
           cliente_id?: string
-          concepto?: string
+          concepto_cobranza_id?: string | null
           created_at?: string
           created_by?: string | null
-          estado?: Database['public']['Enums']['cargo_estado']
-          fecha_vencimiento?: string
+          descripcion?: string
+          estado?: Database['public']['Enums']['cargo_extraordinario_estado']
+          fecha_registro?: string
           id?: string
           monto?: number
           periodo_anio?: number
@@ -136,10 +106,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'cargos_cobranza_cliente_id_fkey'
+            foreignKeyName: 'cargos_extraordinarios_cliente_id_fkey'
             columns: ['cliente_id']
             isOneToOne: false
             referencedRelation: 'clientes'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'cargos_extraordinarios_concepto_cobranza_id_fkey'
+            columns: ['concepto_cobranza_id']
+            isOneToOne: false
+            referencedRelation: 'conceptos_cobranza'
             referencedColumns: ['id']
           },
         ]
@@ -241,6 +218,154 @@ export type Database = {
             referencedColumns: ['codigo']
           },
         ]
+      }
+      cobranzas: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          created_by: string | null
+          estado: Database['public']['Enums']['cobranza_estado']
+          fecha_limite: string
+          generada_por: string | null
+          id: string
+          periodo_anio: number
+          periodo_mes: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          created_by?: string | null
+          estado?: Database['public']['Enums']['cobranza_estado']
+          fecha_limite: string
+          generada_por?: string | null
+          id?: string
+          periodo_anio: number
+          periodo_mes: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          created_by?: string | null
+          estado?: Database['public']['Enums']['cobranza_estado']
+          fecha_limite?: string
+          generada_por?: string | null
+          id?: string
+          periodo_anio?: number
+          periodo_mes?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'cobranzas_cliente_id_fkey'
+            columns: ['cliente_id']
+            isOneToOne: false
+            referencedRelation: 'clientes'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      conceptos_cobranza: {
+        Row: {
+          cargo_extraordinario_id: string | null
+          cobranza_id: string
+          created_at: string
+          created_by: string | null
+          descripcion: string
+          fecha_incorporacion: string
+          id: string
+          monto: number
+          servicio_contratado_id: string | null
+          tipo: Database['public']['Enums']['concepto_cobranza_tipo']
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cargo_extraordinario_id?: string | null
+          cobranza_id: string
+          created_at?: string
+          created_by?: string | null
+          descripcion: string
+          fecha_incorporacion?: string
+          id?: string
+          monto: number
+          servicio_contratado_id?: string | null
+          tipo: Database['public']['Enums']['concepto_cobranza_tipo']
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cargo_extraordinario_id?: string | null
+          cobranza_id?: string
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string
+          fecha_incorporacion?: string
+          id?: string
+          monto?: number
+          servicio_contratado_id?: string | null
+          tipo?: Database['public']['Enums']['concepto_cobranza_tipo']
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'conceptos_cobranza_cargo_extraordinario_id_fkey'
+            columns: ['cargo_extraordinario_id']
+            isOneToOne: false
+            referencedRelation: 'cargos_extraordinarios'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'conceptos_cobranza_cobranza_id_fkey'
+            columns: ['cobranza_id']
+            isOneToOne: false
+            referencedRelation: 'cobranzas'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'conceptos_cobranza_cobranza_id_fkey'
+            columns: ['cobranza_id']
+            isOneToOne: false
+            referencedRelation: 'cobranzas_resumen'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'conceptos_cobranza_servicio_contratado_id_fkey'
+            columns: ['servicio_contratado_id']
+            isOneToOne: false
+            referencedRelation: 'servicios_contratados'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      configuracion_cobranza: {
+        Row: {
+          dia_generacion: number
+          dia_limite_pago: number
+          id: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          dia_generacion?: number
+          dia_limite_pago?: number
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          dia_generacion?: number
+          dia_limite_pago?: number
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       contactos: {
         Row: {
@@ -735,47 +860,54 @@ export type Database = {
       }
       pagos: {
         Row: {
-          cliente_id: string
+          cobranza_id: string
+          comentario: string | null
           created_at: string
           created_by: string | null
           fecha_pago: string
           id: string
           metodo_pago_id: string
           monto: number
-          referencia: string | null
           updated_at: string
           updated_by: string | null
         }
         Insert: {
-          cliente_id: string
+          cobranza_id: string
+          comentario?: string | null
           created_at?: string
           created_by?: string | null
           fecha_pago?: string
           id?: string
           metodo_pago_id: string
           monto: number
-          referencia?: string | null
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
-          cliente_id?: string
+          cobranza_id?: string
+          comentario?: string | null
           created_at?: string
           created_by?: string | null
           fecha_pago?: string
           id?: string
           metodo_pago_id?: string
           monto?: number
-          referencia?: string | null
           updated_at?: string
           updated_by?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: 'pagos_cliente_id_fkey'
-            columns: ['cliente_id']
+            foreignKeyName: 'pagos_cobranza_id_fkey'
+            columns: ['cobranza_id']
             isOneToOne: false
-            referencedRelation: 'clientes'
+            referencedRelation: 'cobranzas'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'pagos_cobranza_id_fkey'
+            columns: ['cobranza_id']
+            isOneToOne: false
+            referencedRelation: 'cobranzas_resumen'
             referencedColumns: ['id']
           },
           {
@@ -1199,7 +1331,32 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      cobranzas_resumen: {
+        Row: {
+          cliente_id: string | null
+          created_at: string | null
+          estado: Database['public']['Enums']['cobranza_estado'] | null
+          estado_pago: string | null
+          estado_vencimiento: string | null
+          fecha_limite: string | null
+          generada_por: string | null
+          id: string | null
+          periodo_anio: number | null
+          periodo_mes: number | null
+          saldo: number | null
+          total_conceptos: number | null
+          total_pagado: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'cobranzas_cliente_id_fkey'
+            columns: ['cliente_id']
+            isOneToOne: false
+            referencedRelation: 'clientes'
+            referencedColumns: ['id']
+          },
+        ]
+      }
     }
     Functions: {
       aplicar_plantilla_obligaciones: {
@@ -1216,6 +1373,10 @@ export type Database = {
       clear_must_change_password: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      generar_cobranzas: {
+        Args: { p_forzar?: boolean }
+        Returns: number
       }
       generar_cumplimientos_fiscales: {
         Args: Record<PropertyKey, never>
@@ -1245,8 +1406,10 @@ export type Database = {
     }
     Enums: {
       app_role: 'administrador' | 'contador' | 'auxiliar'
-      cargo_estado: 'pendiente' | 'pagado' | 'vencido' | 'cancelado'
+      cargo_extraordinario_estado: 'pendiente' | 'incorporado'
       cliente_estado: 'activo' | 'inactivo'
+      cobranza_estado: 'vigente' | 'cancelada' | 'eliminada'
+      concepto_cobranza_tipo: 'servicio_recurrente' | 'cargo_extraordinario'
       contacto_estado: 'activo' | 'obsoleto'
       cumplimiento_fiscal_estado: 'pendiente' | 'en_proceso' | 'presentada' | 'no_aplica'
       documento_estado: 'activo' | 'reemplazado' | 'eliminado'
@@ -1902,8 +2065,10 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ['administrador', 'contador', 'auxiliar'],
-      cargo_estado: ['pendiente', 'pagado', 'vencido', 'cancelado'],
+      cargo_extraordinario_estado: ['pendiente', 'incorporado'],
       cliente_estado: ['activo', 'inactivo'],
+      cobranza_estado: ['vigente', 'cancelada', 'eliminada'],
+      concepto_cobranza_tipo: ['servicio_recurrente', 'cargo_extraordinario'],
       contacto_estado: ['activo', 'obsoleto'],
       cumplimiento_fiscal_estado: ['pendiente', 'en_proceso', 'presentada', 'no_aplica'],
       documento_estado: ['activo', 'reemplazado', 'eliminado'],

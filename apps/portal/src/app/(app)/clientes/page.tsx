@@ -17,7 +17,12 @@ const CLIENTES_POR_PAGINA = 20
 export default async function ClientesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; mostrarInactivos?: string; q?: string }>
+  searchParams: Promise<{
+    page?: string
+    mostrarInactivos?: string
+    q?: string
+    sinServiciosActivos?: string
+  }>
 }) {
   const currentProfile = await requireCapability('view_clients')
   const supabase = await createServerSupabaseClient()
@@ -26,6 +31,7 @@ export default async function ClientesPage({
   const paginaActual = Math.max(1, Number.parseInt(params.page ?? '1', 10) || 1)
   const mostrarInactivos = params.mostrarInactivos === 'true'
   const q = params.q?.trim() ?? ''
+  const sinServiciosActivos = params.sinServiciosActivos === '1'
 
   let query = supabase
     .from('clientes')
@@ -38,6 +44,19 @@ export default async function ClientesPage({
 
   if (q) {
     query = query.or(`nombre.ilike.%${q}%,rfc.ilike.%${q}%`)
+  }
+
+  if (sinServiciosActivos) {
+    const { data: clientesConServicioActivo } = await supabase
+      .from('servicios_contratados')
+      .select('cliente_id')
+      .eq('estado', 'activo')
+    const idsConServicioActivo = Array.from(
+      new Set((clientesConServicioActivo ?? []).map((row) => row.cliente_id)),
+    )
+    if (idsConServicioActivo.length > 0) {
+      query = query.not('id', 'in', `(${idsConServicioActivo.join(',')})`)
+    }
   }
 
   const desde = (paginaActual - 1) * CLIENTES_POR_PAGINA

@@ -1,5 +1,12 @@
 export { esRfcValido } from './rfc'
-export { calcularEstadoCargo, type CalcularEstadoCargoInput, type CargoEstado } from './cobranza'
+export {
+  calcularEstadoPago,
+  calcularEstadoVencimiento,
+  type CalcularEstadoPagoInput,
+  type CalcularEstadoVencimientoInput,
+  type EstadoPagoCobranza,
+  type EstadoVencimientoCobranza,
+} from './cobranza'
 export { excedeTamanoMaximo, TAMANO_MAXIMO_DOCUMENTO_BYTES } from './expedientes'
 export {
   clienteFormSchema,
@@ -63,3 +70,17 @@ export {
   mapearErrorDocumentoEsperadoAMensaje,
   type DocumentoEsperadoFormValues,
 } from './documentosEsperadosForm'
+export {
+  pagoCobranzaFormSchema,
+  mapearErrorPagoCobranzaAMensaje,
+  type PagoCobranzaFormValues,
+} from './pagoCobranzaForm'
+export {
+  cargoExtraordinarioFormSchema,
+  mapearErrorCargoExtraordinarioAMensaje,
+  type CargoExtraordinarioFormValues,
+} from './cargoExtraordinarioForm'
+export {
+  configuracionCobranzaFormSchema,
+  type ConfiguracionCobranzaFormValues,
+} from './configuracionCobranzaForm'
