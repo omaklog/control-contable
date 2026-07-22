@@ -39,6 +39,13 @@ import { useState, useTransition } from 'react'
 
 import { ContactoForm } from './ContactoForm'
 import {
+  ExpedienteFiscalSection,
+  type CumplimientoOption,
+  type DocumentoExpedienteRow,
+  type ObligacionFiscalDocumentoOption,
+  type TipoDocumentoOption,
+} from './ExpedienteFiscalSection'
+import {
   ObligacionFiscalClienteForm,
   type ObligacionFiscalOption,
   type PeriodicidadOption,
@@ -133,6 +140,15 @@ export function ClienteDetalleClient({
   onMarcarNoAplicaObligacionFiscal,
   onEliminarObligacionFiscal,
   onAplicarPlantillaObligaciones,
+  documentos,
+  tiposDocumentoDisponibles,
+  cumplimientosDisponibles,
+  obligacionesFiscalesDisponiblesDocumentos,
+  canManageDocumentos,
+  onSubirDocumento,
+  onActualizarClasificacionDocumento,
+  onObtenerUrlFirmadaDocumento,
+  onEliminarDocumento,
 }: {
   cliente: ClienteDetalle
   contactos: ContactoRow[]
@@ -163,6 +179,20 @@ export function ClienteDetalleClient({
   onObtenerHistorialServicio: (
     servicioContratadoId: string,
   ) => Promise<{ eventos: HistorialEvento[]; error: string | null }>
+  documentos: DocumentoExpedienteRow[]
+  tiposDocumentoDisponibles: TipoDocumentoOption[]
+  cumplimientosDisponibles: CumplimientoOption[]
+  obligacionesFiscalesDisponiblesDocumentos: ObligacionFiscalDocumentoOption[]
+  canManageDocumentos: boolean
+  onSubirDocumento: (formData: FormData) => Promise<ActionResult>
+  onActualizarClasificacionDocumento: (
+    documentoId: string,
+    categoriaId: string,
+  ) => Promise<ActionResult>
+  onObtenerUrlFirmadaDocumento: (
+    rutaAlmacenamiento: string,
+  ) => Promise<{ url: string | null; error: string | null }>
+  onEliminarDocumento: (documentoId: string) => Promise<ActionResult>
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -875,6 +905,20 @@ export function ClienteDetalleClient({
             </TableBody>
           </Table>
         )}
+      </Paper>
+
+      <Paper sx={{ p: 3 }}>
+        <ExpedienteFiscalSection
+          documentos={documentos}
+          tiposDocumentoDisponibles={tiposDocumentoDisponibles}
+          cumplimientosDisponibles={cumplimientosDisponibles}
+          obligacionesFiscalesDisponibles={obligacionesFiscalesDisponiblesDocumentos}
+          canManage={canManageDocumentos}
+          onSubirDocumento={onSubirDocumento}
+          onActualizarClasificacionDocumento={onActualizarClasificacionDocumento}
+          onObtenerUrlFirmadaDocumento={onObtenerUrlFirmadaDocumento}
+          onEliminarDocumento={onEliminarDocumento}
+        />
       </Paper>
 
       <Paper sx={{ p: 3 }}>

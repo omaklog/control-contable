@@ -4,7 +4,9 @@ import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
 import { notFound } from 'next/navigation'
 
+import { obtenerUrlFirmadaDocumento } from '../../clientes/[clienteId]/actions'
 import { CumplimientoDetalleClient } from './CumplimientoDetalleClient'
+import { obtenerDocumentosEsperados } from './actions'
 
 /**
  * Detalle de un Cumplimiento Fiscal (015-control-cumplimiento-fiscal,
@@ -104,6 +106,8 @@ export default async function CumplimientoDetallePage({
 
   const canManage = currentProfile.capabilities.includes('manage_clients')
 
+  const { esperados, documentosAdicionales } = await obtenerDocumentosEsperados(cumplimientoId)
+
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom>
@@ -115,6 +119,9 @@ export default async function CumplimientoDetallePage({
         documentosDisponibles={documentosDisponibles}
         responsablesDisponibles={responsablesDisponibles}
         canManage={canManage}
+        documentosEsperados={esperados}
+        documentosAdicionales={documentosAdicionales}
+        onObtenerUrlFirmadaDocumento={obtenerUrlFirmadaDocumento}
       />
     </Container>
   )

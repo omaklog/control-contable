@@ -2,6 +2,7 @@ import { requireCapability } from '@control-contable/auth'
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import EventRepeatIcon from '@mui/icons-material/EventRepeat'
+import FolderSpecialOutlinedIcon from '@mui/icons-material/FolderSpecialOutlined'
 import ListAltIcon from '@mui/icons-material/ListAlt'
 import Container from '@mui/material/Container'
 import List from '@mui/material/List'
@@ -15,9 +16,9 @@ import Link from 'next/link'
 /**
  * Historia 1 de 012-administracion-catalogos: único punto de entrada
  * "Administración > Catálogos". Lista Periodicidades (protegido, 012),
- * Obligaciones Fiscales (editable, 013) y Plantillas de Obligaciones
- * (editable, 014) — cada catálogo futuro (Tipos de Documento, Régimen
- * Fiscal) se agrega aquí desde su propia especificación.
+ * Obligaciones Fiscales (editable, 013), Plantillas de Obligaciones
+ * (editable, 014) y Tipos de Documento (editable, 016) — cada catálogo
+ * futuro (Régimen Fiscal) se agrega aquí desde su propia especificación.
  */
 export default async function CatalogosPage() {
   await requireCapability('manage_catalogs')
@@ -56,6 +57,16 @@ export default async function CatalogosPage() {
             <ListItemText
               primary="Plantillas de Obligaciones"
               secondary="Carga inicial rápida de obligaciones fiscales para un cliente"
+            />
+            <ChevronRightIcon color="action" />
+          </ListItemButton>
+          <ListItemButton component={Link} href="/catalogos/tipos-documento">
+            <ListItemIcon>
+              <FolderSpecialOutlinedIcon />
+            </ListItemIcon>
+            <ListItemText
+              primary="Tipos de Documento"
+              secondary="Clasificación de documentos del Expediente Fiscal"
             />
             <ChevronRightIcon color="action" />
           </ListItemButton>

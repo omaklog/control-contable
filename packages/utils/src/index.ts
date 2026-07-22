@@ -47,3 +47,19 @@ export {
   mapearErrorCumplimientoFiscalAMensaje,
   type CumplimientoExtraordinarioFormValues,
 } from './cumplimientoFiscalForm'
+export {
+  documentoFormSchema,
+  mapearErrorDocumentoAMensaje,
+  validarArchivoDocumento,
+  type DocumentoFormValues,
+} from './documentoForm'
+export {
+  tipoDocumentoFormSchema,
+  mapearErrorTipoDocumentoAMensaje,
+  type TipoDocumentoFormValues,
+} from './tipoDocumentoForm'
+export {
+  documentoEsperadoFormSchema,
+  mapearErrorDocumentoEsperadoAMensaje,
+  type DocumentoEsperadoFormValues,
+} from './documentosEsperadosForm'

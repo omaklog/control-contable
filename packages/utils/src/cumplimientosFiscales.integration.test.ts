@@ -453,9 +453,28 @@ describe.skipIf(!reachable)(
         .from('cumplimientos_fiscales')
         .update({ fecha_limite: '2030-06-30' })
         .eq('id', cumplimientoId)
+
+      // Documento propio de esta prueba (no documentoClienteId, ya asociado a
+      // otro cumplimiento en la prueba de US2): desde 016-expediente-fiscal
+      // un documento admite como máximo un cumplimiento asociado
+      // (cumplimiento_fiscal_documentos_documento_unique).
+      const { data: documentoEvento } = await admin
+        .from('documentos')
+        .insert({
+          cliente_id: clienteId,
+          categoria_id: categoriaDocumentoId,
+          nombre_original: `evento-auditoria-${Date.now()}.pdf`,
+          tamano_bytes: 1024,
+          formato: 'application/pdf',
+          ruta_almacenamiento: `clientes/prueba/evento-auditoria-${Date.now()}.pdf`,
+          cargado_por: administradorId,
+        })
+        .select('id')
+        .single()
+
       await admin.from('cumplimiento_fiscal_documentos').insert({
         cumplimiento_id: cumplimientoId,
-        documento_id: documentoClienteId,
+        documento_id: documentoEvento!.id,
       })
 
       const { data: eventos } = await admin

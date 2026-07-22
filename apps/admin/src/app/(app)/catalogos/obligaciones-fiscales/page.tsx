@@ -40,6 +40,13 @@ export default async function ObligacionesFiscalesPage({
     .order('nombre', { ascending: true })
   const periodicidadesActivas = periodicidadesData ?? []
 
+  const { data: tiposDocumentoData } = await supabase
+    .from('categorias_documento')
+    .select('id, nombre')
+    .eq('activa', true)
+    .order('nombre', { ascending: true })
+  const tiposDocumentoDisponibles = tiposDocumentoData ?? []
+
   const { data: nombresData } = await supabase
     .from('obligaciones_fiscales')
     .select('nombre')
@@ -83,6 +90,7 @@ export default async function ObligacionesFiscalesPage({
       <ObligacionesFiscalesClient
         obligaciones={obligaciones}
         periodicidadesActivas={periodicidadesActivas}
+        tiposDocumentoDisponibles={tiposDocumentoDisponibles}
         nombresDisponibles={nombresDisponibles}
         totalPaginas={totalPaginas}
         paginaActual={paginaActual}

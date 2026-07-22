@@ -6,19 +6,23 @@ import Typography from '@mui/material/Typography'
 import { notFound } from 'next/navigation'
 
 import {
+  actualizarClasificacionDocumento,
   agregarObligacionFiscalCliente,
   agregarServicioContratado,
   aplicarPlantillaObligaciones,
   cambiarPrecioServicioContratado,
   createContacto,
   editarObligacionFiscalCliente,
+  eliminarDocumento,
   eliminarObligacionFiscalCliente,
   finalizarServicioContratado,
   marcarNoAplicaObligacionFiscalCliente,
   obtenerHistorialServicioContratado,
+  obtenerUrlFirmadaDocumento,
   reactivarServicioContratado,
   setContactoEstado,
   setContactoPrincipal,
+  subirDocumento,
   suspenderServicioContratado,
   updateContacto,
 } from './actions'
@@ -48,6 +52,9 @@ export default async function ClienteDetallePage({
     { data: obligacionesFiscalesDisponiblesData },
     { data: periodicidadesDisponiblesData },
     { data: plantillasDisponiblesData },
+    { data: documentosData },
+    { data: categoriasDocumentoData },
+    { data: cumplimientosClienteData },
   ] = await Promise.all([
     supabase
       .from('clientes')
@@ -95,6 +102,29 @@ export default async function ClienteDetallePage({
       .select('id, nombre')
       .eq('estado', 'activo')
       .order('nombre', { ascending: true }),
+    supabase
+      .from('documentos')
+      .select(
+        `id, nombre_original, categoria_id, obligacion_fiscal_id, tamano_bytes, ruta_almacenamiento, cargado_por, fecha_carga, estado,
+         categorias_documento(nombre),
+         obligaciones_fiscales(nombre),
+         cumplimiento_fiscal_documentos(cumplimiento_id, cumplimientos_fiscales(periodo_inicio, periodo_etiqueta))`,
+      )
+      .eq('cliente_id', clienteId)
+      .neq('estado', 'eliminado')
+      .order('fecha_carga', { ascending: false }),
+    supabase
+      .from('categorias_documento')
+      .select('id, nombre')
+      .eq('activa', true)
+      .order('nombre', { ascending: true }),
+    supabase
+      .from('cumplimientos_fiscales')
+      .select(
+        'id, periodo_etiqueta, descripcion, obligaciones_fiscales_cliente(obligaciones_fiscales(nombre)), obligaciones_fiscales(nombre)',
+      )
+      .eq('cliente_id', clienteId)
+      .order('periodo_inicio', { ascending: false }),
   ])
 
   if (!clienteData) {
@@ -166,7 +196,43 @@ export default async function ClienteDetallePage({
     nombre: row.nombre,
   }))
 
+  const documentos = (documentosData ?? []).map((row) => {
+    const asociacionCumplimiento = row.cumplimiento_fiscal_documentos?.[0]
+    return {
+      id: row.id,
+      nombreOriginal: row.nombre_original,
+      categoriaId: row.categoria_id,
+      categoriaNombre: row.categorias_documento?.nombre ?? null,
+      obligacionFiscalId: row.obligacion_fiscal_id,
+      obligacionFiscalNombre: row.obligaciones_fiscales?.nombre ?? null,
+      cumplimientoId: asociacionCumplimiento?.cumplimiento_id ?? null,
+      periodoEtiqueta: asociacionCumplimiento?.cumplimientos_fiscales?.periodo_etiqueta ?? null,
+      periodoAnio: asociacionCumplimiento?.cumplimientos_fiscales?.periodo_inicio
+        ? new Date(asociacionCumplimiento.cumplimientos_fiscales.periodo_inicio).getFullYear()
+        : null,
+      tamanoBytes: row.tamano_bytes,
+      rutaAlmacenamiento: row.ruta_almacenamiento,
+      fechaCarga: row.fecha_carga,
+    }
+  })
+
+  const tiposDocumentoDisponibles = (categoriasDocumentoData ?? []).map((row) => ({
+    id: row.id,
+    nombre: row.nombre,
+  }))
+
+  const cumplimientosDisponibles = (cumplimientosClienteData ?? []).map((row) => ({
+    id: row.id,
+    etiqueta: `${
+      row.obligaciones_fiscales_cliente?.obligaciones_fiscales?.nombre ??
+      row.obligaciones_fiscales?.nombre ??
+      row.descripcion ??
+      'Cumplimiento'
+    } — ${row.periodo_etiqueta}`,
+  }))
+
   const canManage = currentProfile.capabilities.includes('manage_clients')
+  const canManageDocumentos = currentProfile.capabilities.includes('manage_documents')
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
@@ -201,6 +267,15 @@ export default async function ClienteDetallePage({
         )}
         onEliminarObligacionFiscal={eliminarObligacionFiscalCliente.bind(null, clienteId)}
         onAplicarPlantillaObligaciones={aplicarPlantillaObligaciones.bind(null, clienteId)}
+        documentos={documentos}
+        tiposDocumentoDisponibles={tiposDocumentoDisponibles}
+        cumplimientosDisponibles={cumplimientosDisponibles}
+        obligacionesFiscalesDisponiblesDocumentos={obligacionesFiscalesDisponibles}
+        canManageDocumentos={canManageDocumentos}
+        onSubirDocumento={subirDocumento.bind(null, clienteId)}
+        onActualizarClasificacionDocumento={actualizarClasificacionDocumento.bind(null, clienteId)}
+        onObtenerUrlFirmadaDocumento={obtenerUrlFirmadaDocumento}
+        onEliminarDocumento={eliminarDocumento.bind(null, clienteId)}
       />
     </Container>
   )

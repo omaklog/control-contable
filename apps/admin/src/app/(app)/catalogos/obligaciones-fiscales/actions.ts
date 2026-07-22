@@ -3,6 +3,7 @@
 import { requireCapability } from '@control-contable/auth'
 import { createServerSupabaseClient } from '@control-contable/supabase-client/server'
 import {
+  mapearErrorDocumentoEsperadoAMensaje,
   mapearErrorObligacionFiscalAMensaje,
   type ObligacionFiscalFormValues,
 } from '@control-contable/utils'
@@ -88,6 +89,91 @@ export async function setObligacionFiscalEstado(
 
   if (error) {
     return { error: 'No se pudo actualizar el estado de la obligación fiscal. Inténtalo de nuevo.' }
+  }
+
+  revalidatePath('/catalogos/obligaciones-fiscales')
+  return { error: null }
+}
+
+export interface DocumentoEsperadoRow {
+  id: string
+  categoriaDocumentoId: string
+  categoriaNombre: string
+}
+
+/**
+ * Documentos Esperados vigentes de una obligación fiscal
+ * (016-expediente-fiscal, US5, FR-010): solo la configuración activa —
+ * desactivar en vez de borrar conserva el historial.
+ */
+export async function obtenerDocumentosEsperadosObligacion(
+  obligacionFiscalId: string,
+): Promise<{ esperados: DocumentoEsperadoRow[]; error: string | null }> {
+  await requireCapability('manage_catalogs')
+  const supabase = await createServerSupabaseClient()
+
+  const { data, error } = await supabase
+    .from('documentos_esperados_obligacion')
+    .select('id, categoria_documento_id, categorias_documento(nombre)')
+    .eq('obligacion_fiscal_id', obligacionFiscalId)
+    .eq('activo', true)
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    return { esperados: [], error: 'No se pudieron cargar los Documentos Esperados.' }
+  }
+
+  return {
+    esperados: (data ?? []).map((row) => ({
+      id: row.id,
+      categoriaDocumentoId: row.categoria_documento_id,
+      categoriaNombre: row.categorias_documento?.nombre ?? '',
+    })),
+    error: null,
+  }
+}
+
+/**
+ * Agrega un Documento Esperado a una obligación fiscal (FR-010). Los
+ * cumplimientos ya generados no se ven afectados — solo los que se generen
+ * después usarán esta configuración (FR-011, snapshot por trigger).
+ */
+export async function agregarDocumentoEsperado(
+  obligacionFiscalId: string,
+  categoriaDocumentoId: string,
+): Promise<ActionResult> {
+  await requireCapability('manage_catalogs')
+  const supabase = await createServerSupabaseClient()
+
+  const { error } = await supabase.from('documentos_esperados_obligacion').insert({
+    obligacion_fiscal_id: obligacionFiscalId,
+    categoria_documento_id: categoriaDocumentoId,
+  })
+
+  if (error) {
+    return { error: mapearErrorDocumentoEsperadoAMensaje(error) }
+  }
+
+  revalidatePath('/catalogos/obligaciones-fiscales')
+  return { error: null }
+}
+
+/**
+ * Retira un Documento Esperado de la configuración vigente de una obligación
+ * (FR-010): desactiva la fila en vez de borrarla físicamente, conservando el
+ * historial de la configuración.
+ */
+export async function quitarDocumentoEsperado(documentoEsperadoId: string): Promise<ActionResult> {
+  await requireCapability('manage_catalogs')
+  const supabase = await createServerSupabaseClient()
+
+  const { error } = await supabase
+    .from('documentos_esperados_obligacion')
+    .update({ activo: false })
+    .eq('id', documentoEsperadoId)
+
+  if (error) {
+    return { error: 'No se pudo quitar el Documento Esperado. Inténtalo de nuevo.' }
   }
 
   revalidatePath('/catalogos/obligaciones-fiscales')

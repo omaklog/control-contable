@@ -1,7 +1,9 @@
 'use client'
 
 import AddIcon from '@mui/icons-material/Add'
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
+import FactCheckOutlinedIcon from '@mui/icons-material/FactCheckOutlined'
 import ToggleOffIcon from '@mui/icons-material/ToggleOff'
 import ToggleOnIcon from '@mui/icons-material/ToggleOn'
 import Alert from '@mui/material/Alert'
@@ -13,6 +15,9 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import IconButton from '@mui/material/IconButton'
+import List from '@mui/material/List'
+import ListItem from '@mui/material/ListItem'
+import ListItemText from '@mui/material/ListItemText'
 import MenuItem from '@mui/material/MenuItem'
 import Pagination from '@mui/material/Pagination'
 import Paper from '@mui/material/Paper'
@@ -30,12 +35,21 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useTransition } from 'react'
 
 import {
+  agregarDocumentoEsperado,
   createObligacionFiscal,
+  obtenerDocumentosEsperadosObligacion,
+  quitarDocumentoEsperado,
   setObligacionFiscalEstado,
   updateObligacionFiscal,
+  type DocumentoEsperadoRow,
 } from './actions'
 
 export interface PeriodicidadOption {
+  id: string
+  nombre: string
+}
+
+export interface TipoDocumentoOption {
   id: string
   nombre: string
 }
@@ -63,6 +77,7 @@ const VALORES_VACIOS = { nombre: '', descripcion: '', periodicidadId: '', priori
 export function ObligacionesFiscalesClient({
   obligaciones,
   periodicidadesActivas,
+  tiposDocumentoDisponibles,
   nombresDisponibles,
   totalPaginas,
   paginaActual,
@@ -73,6 +88,7 @@ export function ObligacionesFiscalesClient({
 }: {
   obligaciones: ObligacionFiscalRow[]
   periodicidadesActivas: PeriodicidadOption[]
+  tiposDocumentoDisponibles: TipoDocumentoOption[]
   nombresDisponibles: string[]
   totalPaginas: number
   paginaActual: number
@@ -93,6 +109,11 @@ export function ObligacionesFiscalesClient({
   const [createOpen, setCreateOpen] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [formValues, setFormValues] = useState(VALORES_VACIOS)
+
+  const [esperadosTarget, setEsperadosTarget] = useState<ObligacionFiscalRow | null>(null)
+  const [esperados, setEsperados] = useState<DocumentoEsperadoRow[]>([])
+  const [esperadosError, setEsperadosError] = useState<string | null>(null)
+  const [nuevoEsperado, setNuevoEsperado] = useState<TipoDocumentoOption | null>(null)
   const [editTargetId, setEditTargetId] = useState<string | null>(null)
   const [confirmTargetId, setConfirmTargetId] = useState<string | null>(null)
 
@@ -173,6 +194,47 @@ export function ObligacionesFiscalesClient({
       const result = await setObligacionFiscalEstado(obligacionId, 'activo')
       if (result.error) setGlobalError(result.error)
       else router.refresh()
+    })
+  }
+
+  async function abrirEsperados(obligacion: ObligacionFiscalRow) {
+    setEsperadosError(null)
+    setNuevoEsperado(null)
+    setEsperadosTarget(obligacion)
+    const result = await obtenerDocumentosEsperadosObligacion(obligacion.id)
+    if (result.error) {
+      setEsperadosError(result.error)
+      return
+    }
+    setEsperados(result.esperados)
+  }
+
+  function agregarEsperado() {
+    if (!esperadosTarget || !nuevoEsperado) return
+    setEsperadosError(null)
+    startTransition(async () => {
+      const result = await agregarDocumentoEsperado(esperadosTarget.id, nuevoEsperado.id)
+      if (result.error) {
+        setEsperadosError(result.error)
+        return
+      }
+      setNuevoEsperado(null)
+      const refreshed = await obtenerDocumentosEsperadosObligacion(esperadosTarget.id)
+      setEsperados(refreshed.esperados)
+    })
+  }
+
+  function quitarEsperado(documentoEsperadoId: string) {
+    if (!esperadosTarget) return
+    setEsperadosError(null)
+    startTransition(async () => {
+      const result = await quitarDocumentoEsperado(documentoEsperadoId)
+      if (result.error) {
+        setEsperadosError(result.error)
+        return
+      }
+      const refreshed = await obtenerDocumentosEsperadosObligacion(esperadosTarget.id)
+      setEsperados(refreshed.esperados)
     })
   }
 
@@ -290,6 +352,17 @@ export function ObligacionesFiscalesClient({
                               aria-label="Editar obligación"
                             >
                               <EditOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                        <Tooltip title="Documentos Esperados">
+                          <span>
+                            <IconButton
+                              size="small"
+                              onClick={() => abrirEsperados(obligacion)}
+                              aria-label="Documentos Esperados"
+                            >
+                              <FactCheckOutlinedIcon fontSize="small" />
                             </IconButton>
                           </span>
                         </Tooltip>
@@ -432,6 +505,75 @@ export function ObligacionesFiscalesClient({
           <Button variant="contained" color="error" onClick={confirmarDesactivar}>
             Confirmar
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(esperadosTarget)}
+        onClose={() => setEsperadosTarget(null)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Documentos Esperados — {esperadosTarget?.nombre}</DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+          {esperadosError ? <Alert severity="error">{esperadosError}</Alert> : null}
+          <Typography variant="body2" color="text.secondary">
+            Referencia informativa para el seguimiento de cumplimientos (016-expediente-fiscal) — no
+            bloquea ningún flujo. Los cumplimientos ya generados conservan la configuración vigente
+            al momento de su generación.
+          </Typography>
+          {esperados.length === 0 ? (
+            <Typography color="text.secondary">Sin Documentos Esperados configurados.</Typography>
+          ) : (
+            <List dense>
+              {esperados.map((esperado) => (
+                <ListItem
+                  key={esperado.id}
+                  secondaryAction={
+                    <IconButton
+                      size="small"
+                      edge="end"
+                      disabled={isPending}
+                      onClick={() => quitarEsperado(esperado.id)}
+                      aria-label="Quitar Documento Esperado"
+                    >
+                      <DeleteOutlineIcon fontSize="small" />
+                    </IconButton>
+                  }
+                >
+                  <ListItemText primary={esperado.categoriaNombre} />
+                </ListItem>
+              ))}
+            </List>
+          )}
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <Autocomplete
+              options={tiposDocumentoDisponibles}
+              getOptionLabel={(option) => option.nombre}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              value={nuevoEsperado}
+              onChange={(_event, value) => setNuevoEsperado(value)}
+              sx={{ flexGrow: 1 }}
+              renderInput={({ InputLabelProps, InputProps, size: _size, ...rest }) => (
+                <TextField
+                  {...rest}
+                  slotProps={{ inputLabel: InputLabelProps, input: InputProps }}
+                  label="Agregar Tipo de Documento"
+                  size="small"
+                />
+              )}
+            />
+            <Button
+              variant="outlined"
+              disabled={!nuevoEsperado || isPending}
+              onClick={agregarEsperado}
+            >
+              Agregar
+            </Button>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEsperadosTarget(null)}>Cerrar</Button>
         </DialogActions>
       </Dialog>
     </Box>

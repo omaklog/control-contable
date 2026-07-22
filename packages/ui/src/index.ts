@@ -20,6 +20,13 @@ export {
   type ObligacionFiscalOption,
   type PeriodicidadOption,
 } from './ObligacionFiscalClienteForm'
+export {
+  ExpedienteFiscalSection,
+  type CumplimientoOption,
+  type DocumentoExpedienteRow,
+  type ObligacionFiscalDocumentoOption,
+  type TipoDocumentoOption,
+} from './ExpedienteFiscalSection'
 export { lightTheme, darkTheme, ColorModeProvider, useColorMode } from './theme'
 export {
   StatusChip,

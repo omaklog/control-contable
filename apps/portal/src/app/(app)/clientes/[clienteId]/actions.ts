@@ -4,8 +4,10 @@ import { requireCapability } from '@control-contable/auth'
 import { createServerSupabaseClient } from '@control-contable/supabase-client/server'
 import {
   mapearErrorContactoAMensaje,
+  mapearErrorDocumentoAMensaje,
   mapearErrorObligacionFiscalClienteAMensaje,
   mapearErrorServicioContratadoAMensaje,
+  validarArchivoDocumento,
   type ContactoFormValues,
   type ObligacionFiscalClienteFormValues,
   type ServicioContratadoFormValues,
@@ -449,6 +451,179 @@ export async function aplicarPlantillaObligaciones(
 
   if (error) {
     return { error: 'No se pudo aplicar la plantilla. Inténtalo de nuevo.' }
+  }
+
+  revalidatePath(`/clientes/${clienteId}`)
+  return { error: null }
+}
+
+const EXPEDIENTES_BUCKET = 'expedientes'
+
+/**
+ * Sube un documento al Expediente Fiscal del cliente (016-expediente-fiscal,
+ * US1). El Tipo de Documento, el Cumplimiento y la Obligación Fiscal son
+ * opcionales (FR-006, FR-007, FR-027) — un documento puede quedar "Sin
+ * clasificar" y sin ninguna asociación. La subida ocurre con la sesión del
+ * propio usuario (nunca service_role, research.md Decisión 9): primero se
+ * inserta la fila en `documentos` para obtener su `id`, luego se sube el
+ * archivo a esa ruta en el bucket privado `expedientes`; si falla la subida,
+ * se revierte la fila insertada para no dejar metadatos húérfanos sin
+ * archivo.
+ */
+export async function subirDocumento(clienteId: string, formData: FormData): Promise<ActionResult> {
+  await requireCapability('manage_documents')
+  const supabase = await createServerSupabaseClient()
+
+  const archivo = formData.get('archivo')
+  if (!(archivo instanceof File) || archivo.size === 0) {
+    return { error: 'Selecciona un archivo PDF para cargar.' }
+  }
+
+  const errorArchivo = validarArchivoDocumento({
+    tamanoBytes: archivo.size,
+    tipoMime: archivo.type,
+  })
+  if (errorArchivo) {
+    return { error: errorArchivo }
+  }
+
+  const categoriaId = (formData.get('categoriaId') as string | null)?.trim() || null
+  const cumplimientoId = (formData.get('cumplimientoId') as string | null)?.trim() || null
+  const obligacionFiscalId = (formData.get('obligacionFiscalId') as string | null)?.trim() || null
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: 'No se pudo identificar al usuario actual.' }
+  }
+
+  const { data: documento, error: insertError } = await supabase
+    .from('documentos')
+    .insert({
+      cliente_id: clienteId,
+      categoria_id: categoriaId,
+      obligacion_fiscal_id: obligacionFiscalId,
+      nombre_original: archivo.name,
+      tamano_bytes: archivo.size,
+      formato: archivo.type,
+      ruta_almacenamiento: '',
+      cargado_por: user.id,
+      created_by: user.id,
+      updated_by: user.id,
+    })
+    .select('id')
+    .single()
+
+  if (insertError || !documento) {
+    return { error: mapearErrorDocumentoAMensaje(insertError) }
+  }
+
+  const rutaAlmacenamiento = `${clienteId}/${documento.id}.pdf`
+
+  const { error: uploadError } = await supabase.storage
+    .from(EXPEDIENTES_BUCKET)
+    .upload(rutaAlmacenamiento, archivo, { contentType: archivo.type })
+
+  if (uploadError) {
+    await supabase.from('documentos').delete().eq('id', documento.id)
+    return { error: 'No se pudo subir el archivo. Intenta de nuevo.' }
+  }
+
+  const { error: rutaError } = await supabase
+    .from('documentos')
+    .update({ ruta_almacenamiento: rutaAlmacenamiento })
+    .eq('id', documento.id)
+
+  if (rutaError) {
+    return { error: mapearErrorDocumentoAMensaje(rutaError) }
+  }
+
+  if (cumplimientoId) {
+    const { error: asociarError } = await supabase
+      .from('cumplimiento_fiscal_documentos')
+      .insert({ cumplimiento_id: cumplimientoId, documento_id: documento.id })
+
+    if (asociarError) {
+      revalidatePath(`/clientes/${clienteId}`)
+      return { error: mapearErrorDocumentoAMensaje(asociarError) }
+    }
+  }
+
+  revalidatePath(`/clientes/${clienteId}`)
+  return { error: null }
+}
+
+/**
+ * Cambia la clasificación (Tipo de Documento) de un documento ya cargado
+ * (FR-006): permite clasificar uno que quedó "Sin clasificar", o
+ * reclasificarlo. El trigger de auditoría registra el cambio como
+ * `cambio_tipo_documento` (contracts/db-functions-rls.md Sección C).
+ */
+export async function actualizarClasificacionDocumento(
+  clienteId: string,
+  documentoId: string,
+  categoriaId: string,
+): Promise<ActionResult> {
+  await requireCapability('manage_documents')
+  const supabase = await createServerSupabaseClient()
+
+  const { error } = await supabase
+    .from('documentos')
+    .update({ categoria_id: categoriaId.trim() || null })
+    .eq('id', documentoId)
+
+  if (error) {
+    return { error: mapearErrorDocumentoAMensaje(error) }
+  }
+
+  revalidatePath(`/clientes/${clienteId}`)
+  return { error: null }
+}
+
+/**
+ * Genera una URL firmada de corta duración (5 minutos) para ver/descargar un
+ * documento del expediente (FR-020, research.md Decisión 9) — nunca una URL
+ * pública ni permanente. La política de Storage ya valida que el usuario
+ * tenga `view_documents`/`manage_documents` antes de generarla.
+ */
+export async function obtenerUrlFirmadaDocumento(
+  rutaAlmacenamiento: string,
+): Promise<{ url: string | null; error: string | null }> {
+  await requireCapability('view_documents')
+  const supabase = await createServerSupabaseClient()
+
+  const { data, error } = await supabase.storage
+    .from(EXPEDIENTES_BUCKET)
+    .createSignedUrl(rutaAlmacenamiento, 300)
+
+  if (error || !data) {
+    return { url: null, error: 'No se pudo generar el acceso al documento. Intenta de nuevo.' }
+  }
+
+  return { url: data.signedUrl, error: null }
+}
+
+/**
+ * Elimina lógicamente un documento (FR-021 a FR-023, 016-expediente-fiscal
+ * US4): nunca un DELETE físico. El trigger `validar_eliminacion_logica_documento`
+ * es la autoridad real sobre quién puede eliminar según antigüedad y rol —
+ * esta acción solo traduce su rechazo a un mensaje claro.
+ */
+export async function eliminarDocumento(
+  clienteId: string,
+  documentoId: string,
+): Promise<ActionResult> {
+  await requireCapability('manage_documents')
+  const supabase = await createServerSupabaseClient()
+
+  const { error } = await supabase
+    .from('documentos')
+    .update({ estado: 'eliminado' })
+    .eq('id', documentoId)
+
+  if (error) {
+    return { error: mapearErrorDocumentoAMensaje(error) }
   }
 
   revalidatePath(`/clientes/${clienteId}`)

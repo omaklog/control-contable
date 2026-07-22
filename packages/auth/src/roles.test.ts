@@ -33,8 +33,9 @@ const EXPECTED_CAPABILITIES: Record<AppRole, ReadonlySet<Capability>> = {
     'manage_billing',
     'view_billing',
     'view_documents',
+    'manage_documents',
   ]),
-  auxiliar: new Set(['view_clients', 'view_billing', 'view_documents']),
+  auxiliar: new Set(['view_clients', 'view_billing', 'view_documents', 'manage_documents']),
 }
 
 // Matriz de "Acceso a aplicaciones" de contracts/role-permissions.md.
@@ -67,22 +68,22 @@ describe('roleDefaultCapabilities', () => {
     expect(capabilities).toEqual(expect.arrayContaining(ALL_CAPABILITIES as Capability[]))
   })
 
-  it('un Contador gestiona clientes y cobranza, pero no documentos, por defecto (005-clientes-cobranza-expedientes, FR-019)', () => {
+  it('un Contador gestiona clientes, cobranza y documentos, pero no catálogos, por defecto (016-expediente-fiscal)', () => {
     const capabilities = roleDefaultCapabilities('contador')
     expect(capabilities).toContain('manage_clients')
     expect(capabilities).toContain('manage_billing')
-    expect(capabilities).not.toContain('manage_documents')
+    expect(capabilities).toContain('manage_documents')
     expect(capabilities).not.toContain('manage_catalogs')
   })
 
-  it('un Auxiliar solo tiene capacidades de consulta (view_*) de negocio por defecto (005-clientes-cobranza-expedientes, FR-019)', () => {
+  it('un Auxiliar puede gestionar documentos (con límite de antigüedad aplicado en base de datos) aunque no gestione clientes ni cobranza (016-expediente-fiscal)', () => {
     const capabilities = roleDefaultCapabilities('auxiliar')
     expect(capabilities).toContain('view_clients')
     expect(capabilities).toContain('view_billing')
     expect(capabilities).toContain('view_documents')
+    expect(capabilities).toContain('manage_documents')
     expect(capabilities).not.toContain('manage_clients')
     expect(capabilities).not.toContain('manage_billing')
-    expect(capabilities).not.toContain('manage_documents')
   })
 })
 

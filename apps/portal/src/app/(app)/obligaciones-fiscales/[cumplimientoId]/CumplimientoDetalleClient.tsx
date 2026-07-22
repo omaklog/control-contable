@@ -1,6 +1,9 @@
 'use client'
 
+import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
+import DownloadIcon from '@mui/icons-material/Download'
 import HistoryIcon from '@mui/icons-material/History'
 import Alert from '@mui/material/Alert'
 import Autocomplete from '@mui/material/Autocomplete'
@@ -14,6 +17,10 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import IconButton from '@mui/material/IconButton'
+import List from '@mui/material/List'
+import ListItem from '@mui/material/ListItem'
+import ListItemIcon from '@mui/material/ListItemIcon'
+import ListItemText from '@mui/material/ListItemText'
 import MenuItem from '@mui/material/MenuItem'
 import Paper from '@mui/material/Paper'
 import Select from '@mui/material/Select'
@@ -60,6 +67,19 @@ export interface DocumentoAsociadoRow {
   documentoId: string
   nombreOriginal: string
   esAcuse: boolean
+}
+
+export interface DocumentoEsperadoRow {
+  categoriaDocumentoId: string
+  categoriaNombre: string
+  disponible: boolean
+}
+
+export interface DocumentoAdicionalRow {
+  id: string
+  nombreOriginal: string
+  categoriaNombre: string | null
+  rutaAlmacenamiento: string
 }
 
 interface OpcionDocumento {
@@ -126,12 +146,20 @@ export function CumplimientoDetalleClient({
   documentosDisponibles,
   responsablesDisponibles,
   canManage,
+  documentosEsperados,
+  documentosAdicionales,
+  onObtenerUrlFirmadaDocumento,
 }: {
   cumplimiento: CumplimientoDetalle
   documentosAsociados: DocumentoAsociadoRow[]
   documentosDisponibles: OpcionDocumento[]
   responsablesDisponibles: OpcionResponsable[]
   canManage: boolean
+  documentosEsperados: DocumentoEsperadoRow[]
+  documentosAdicionales: DocumentoAdicionalRow[]
+  onObtenerUrlFirmadaDocumento: (
+    rutaAlmacenamiento: string,
+  ) => Promise<{ url: string | null; error: string | null }>
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -218,6 +246,17 @@ export function CumplimientoDetalleClient({
         return
       }
       router.refresh()
+    })
+  }
+
+  function verDocumento(rutaAlmacenamiento: string) {
+    startTransition(async () => {
+      const { url, error } = await onObtenerUrlFirmadaDocumento(rutaAlmacenamiento)
+      if (error || !url) {
+        setGlobalError(error ?? 'No se pudo abrir el documento.')
+        return
+      }
+      window.open(url, '_blank', 'noopener,noreferrer')
     })
   }
 
@@ -349,6 +388,67 @@ export function CumplimientoDetalleClient({
           />
         </Box>
       </Paper>
+
+      {documentosEsperados.length > 0 ? (
+        <Paper sx={{ p: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Documentos Esperados
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            Referencia informativa — su ausencia no bloquea ninguna acción sobre este cumplimiento.
+          </Typography>
+          <List dense>
+            {documentosEsperados.map((esperado) => (
+              <ListItem key={esperado.categoriaDocumentoId} disableGutters>
+                <ListItemIcon sx={{ minWidth: 32 }}>
+                  {esperado.disponible ? (
+                    <CheckCircleOutlineIcon color="success" fontSize="small" />
+                  ) : (
+                    <CancelOutlinedIcon color="disabled" fontSize="small" />
+                  )}
+                </ListItemIcon>
+                <ListItemText primary={esperado.categoriaNombre} />
+              </ListItem>
+            ))}
+          </List>
+        </Paper>
+      ) : null}
+
+      {documentosAdicionales.length > 0 ? (
+        <Paper sx={{ p: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Documentos Adicionales
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            Documentos cargados para este cumplimiento que no corresponden a ningún Documento
+            Esperado configurado.
+          </Typography>
+          <Table size="small">
+            <TableBody>
+              {documentosAdicionales.map((documento) => (
+                <TableRow key={documento.id} hover>
+                  <TableCell>{documento.nombreOriginal}</TableCell>
+                  <TableCell>{documento.categoriaNombre ?? 'Sin clasificar'}</TableCell>
+                  <TableCell align="right">
+                    <Tooltip title="Ver / descargar">
+                      <span>
+                        <IconButton
+                          size="small"
+                          disabled={isPending}
+                          onClick={() => verDocumento(documento.rutaAlmacenamiento)}
+                          aria-label="Ver o descargar documento"
+                        >
+                          <DownloadIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Paper>
+      ) : null}
 
       <Paper sx={{ p: 3 }}>
         <Typography variant="h6" gutterBottom>

@@ -24,19 +24,22 @@ describe('MENU_ITEMS (apps/portal)', () => {
     ])
   })
 
-  it('"Cobranza" y "Documentos Fiscales" reusan capacidades existentes de packages/auth (FR-007)', () => {
+  it('"Cobranza" reusa una capacidad existente de packages/auth (FR-007) pero no tiene página propia todavía', () => {
     const cobranza = MENU_ITEMS.find((item) => item.label === 'Cobranza')
-    const documentosFiscales = MENU_ITEMS.find((item) => item.label === 'Documentos Fiscales')
     expect(cobranza?.capability).toBe('view_billing')
     expect(cobranza?.implemented).toBe(false)
-    expect(documentosFiscales?.capability).toBe('view_documents')
-    expect(documentosFiscales?.implemented).toBe(false)
   })
 
   it('"Obligaciones Fiscales" ya está implementado (015-control-cumplimiento-fiscal), restringido a view_clients', () => {
     const obligacionesFiscales = MENU_ITEMS.find((item) => item.label === 'Obligaciones Fiscales')
     expect(obligacionesFiscales?.capability).toBe('view_clients')
     expect(obligacionesFiscales?.implemented).toBe(true)
+  })
+
+  it('"Documentos Fiscales" ya está implementado (016-expediente-fiscal), restringido a view_documents', () => {
+    const documentosFiscales = MENU_ITEMS.find((item) => item.label === 'Documentos Fiscales')
+    expect(documentosFiscales?.capability).toBe('view_documents')
+    expect(documentosFiscales?.implemented).toBe(true)
   })
 
   it('no conserva las entradas ya superadas (Expedientes Digitales/Recibos de Honorarios/Reportes)', () => {

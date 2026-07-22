@@ -49,8 +49,14 @@ const ROLE_DEFAULT_CAPABILITIES: Record<AppRole, ReadonlySet<Capability>> = {
     'manage_billing',
     'view_billing',
     'view_documents',
+    'manage_documents',
   ]),
-  auxiliar: new Set<Capability>(['view_clients', 'view_billing', 'view_documents']),
+  auxiliar: new Set<Capability>([
+    'view_clients',
+    'view_billing',
+    'view_documents',
+    'manage_documents',
+  ]),
 }
 
 export function roleDefaultCapabilities(role: AppRole): Capability[] {

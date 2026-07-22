@@ -139,6 +139,93 @@ export async function desasociarDocumentoCumplimiento(
   return { error: null }
 }
 
+export interface DocumentoEsperadoEstado {
+  categoriaDocumentoId: string
+  categoriaNombre: string
+  disponible: boolean
+}
+
+export interface DocumentoAdicionalRow {
+  id: string
+  nombreOriginal: string
+  categoriaNombre: string | null
+  rutaAlmacenamiento: string
+}
+
+/**
+ * Documentos Esperados de un cumplimiento (016-expediente-fiscal, US2):
+ * lee el snapshot inmutable `cumplimiento_documentos_esperados` (fijado por
+ * trigger al generarse el cumplimiento, nunca por esta función) y calcula,
+ * de forma puramente informativa, cuáles ya están disponibles entre los
+ * documentos asociados a este cumplimiento (FR-012/FR-013 — nunca bloquea
+ * nada). Los documentos asociados cuyo Tipo de Documento no está en la lista
+ * de esperados se devuelven como "Documentos Adicionales" (FR-014).
+ */
+export async function obtenerDocumentosEsperados(cumplimientoId: string): Promise<{
+  esperados: DocumentoEsperadoEstado[]
+  documentosAdicionales: DocumentoAdicionalRow[]
+  error: string | null
+}> {
+  await requireCapability('view_clients')
+  const supabase = await createServerSupabaseClient()
+
+  const [{ data: esperadosData, error: esperadosError }, { data: asociadosData }] =
+    await Promise.all([
+      supabase
+        .from('cumplimiento_documentos_esperados')
+        .select('categoria_documento_id, categorias_documento(nombre)')
+        .eq('cumplimiento_id', cumplimientoId),
+      supabase
+        .from('cumplimiento_fiscal_documentos')
+        .select(
+          'documento_id, documentos(categoria_id, nombre_original, ruta_almacenamiento, estado, categorias_documento(nombre))',
+        )
+        .eq('cumplimiento_id', cumplimientoId),
+    ])
+
+  if (esperadosError) {
+    return {
+      esperados: [],
+      documentosAdicionales: [],
+      error: 'No se pudieron cargar los Documentos Esperados. Inténtalo de nuevo.',
+    }
+  }
+
+  const documentosAsociadosActivos = (asociadosData ?? [])
+    .map((row) => row.documentos)
+    .filter((documento): documento is NonNullable<typeof documento> => Boolean(documento))
+    .filter((documento) => documento.estado !== 'eliminado')
+
+  const categoriasDisponibles = new Set(
+    documentosAsociadosActivos
+      .map((documento) => documento.categoria_id)
+      .filter(Boolean) as string[],
+  )
+
+  const esperados = (esperadosData ?? []).map((row) => ({
+    categoriaDocumentoId: row.categoria_documento_id,
+    categoriaNombre: row.categorias_documento?.nombre ?? '',
+    disponible: categoriasDisponibles.has(row.categoria_documento_id),
+  }))
+
+  const categoriasEsperadas = new Set(esperados.map((esperado) => esperado.categoriaDocumentoId))
+
+  const documentosAdicionales = (asociadosData ?? [])
+    .filter((row) => {
+      const documento = row.documentos
+      if (!documento || documento.estado === 'eliminado') return false
+      return !documento.categoria_id || !categoriasEsperadas.has(documento.categoria_id)
+    })
+    .map((row) => ({
+      id: row.documento_id,
+      nombreOriginal: row.documentos!.nombre_original,
+      categoriaNombre: row.documentos!.categorias_documento?.nombre ?? null,
+      rutaAlmacenamiento: row.documentos!.ruta_almacenamiento,
+    }))
+
+  return { esperados, documentosAdicionales, error: null }
+}
+
 export interface HistorialEvento {
   accion: string
   detalle: unknown

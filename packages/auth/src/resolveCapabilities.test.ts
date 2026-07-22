@@ -6,7 +6,7 @@ import { resolveCapabilities } from './session'
 describe('resolveCapabilities (FR-014, research.md #13)', () => {
   it('sin overrides, devuelve exactamente la plantilla por defecto del rol', () => {
     expect(new Set(resolveCapabilities('auxiliar', []))).toEqual(
-      new Set(['view_clients', 'view_billing', 'view_documents']),
+      new Set(['view_clients', 'view_billing', 'view_documents', 'manage_documents']),
     )
     expect(new Set(resolveCapabilities('administrador', []))).toEqual(new Set(ALL_CAPABILITIES))
   })
