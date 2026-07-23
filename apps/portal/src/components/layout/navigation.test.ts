@@ -14,11 +14,12 @@ describe('MENU_ITEMS (apps/portal)', () => {
     expect(clientes?.capability).toBe('manage_clients')
   })
 
-  it('tiene exactamente 5 entradas, alineadas a docs/ux/design-system.md §2.2', () => {
+  it('tiene exactamente 6 entradas, alineadas a docs/ux/design-system.md §2.2', () => {
     expect(MENU_ITEMS.map((item) => item.label)).toEqual([
       'Inicio',
       'Clientes',
       'Cobranza',
+      'Pagos',
       'Documentos Fiscales',
       'Obligaciones Fiscales',
     ])
@@ -28,6 +29,12 @@ describe('MENU_ITEMS (apps/portal)', () => {
     const cobranza = MENU_ITEMS.find((item) => item.label === 'Cobranza')
     expect(cobranza?.capability).toBe('view_billing')
     expect(cobranza?.implemented).toBe(true)
+  })
+
+  it('"Pagos" ya está implementado (018-gestion-pagos), restringido a view_billing', () => {
+    const pagos = MENU_ITEMS.find((item) => item.label === 'Pagos')
+    expect(pagos?.capability).toBe('view_billing')
+    expect(pagos?.implemented).toBe(true)
   })
 
   it('"Obligaciones Fiscales" ya está implementado (015-control-cumplimiento-fiscal), restringido a view_clients', () => {

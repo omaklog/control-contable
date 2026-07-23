@@ -4,8 +4,17 @@ import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
 import { notFound } from 'next/navigation'
 
-import { CobranzaDetalleClient } from './CobranzaDetalleClient'
-import { cancelarCobranza, eliminarCobranza, registrarPago } from './actions'
+import { CobranzaDetalleClient, type ComprobanteRow } from './CobranzaDetalleClient'
+import {
+  adjuntarComprobante,
+  cancelarCobranza,
+  eliminarCobranza,
+  eliminarComprobante,
+  eliminarPago,
+  modificarPago,
+  registrarPago,
+  revertirPago,
+} from './actions'
 
 /**
  * Detalle de una Cobranza (017-cobranza, US2): conceptos, pagos, saldo y
@@ -45,7 +54,9 @@ export default async function CobranzaDetallePage({
       .order('fecha_incorporacion', { ascending: true }),
     supabase
       .from('pagos')
-      .select('id, monto, fecha_pago, comentario, created_at, metodos_pago(nombre)')
+      .select(
+        'id, monto, fecha_pago, comentario, metodo_pago_id, estado, motivo_reversion, created_at, metodos_pago(nombre)',
+      )
       .eq('cobranza_id', cobranzaId)
       .order('fecha_pago', { ascending: true }),
     supabase
@@ -54,6 +65,16 @@ export default async function CobranzaDetallePage({
       .eq('activo', true)
       .order('nombre', { ascending: true }),
   ])
+
+  const pagoIds = (pagosData ?? []).map((row) => row.id)
+  const { data: comprobantesData } =
+    pagoIds.length > 0
+      ? await supabase
+          .from('comprobantes_pago')
+          .select('id, pago_id, nombre_original, tipo_archivo, tamano_bytes, ruta_almacenamiento')
+          .in('pago_id', pagoIds)
+          .order('created_at', { ascending: true })
+      : { data: [] }
 
   const cobranza = {
     id: resumen.id!,
@@ -78,12 +99,29 @@ export default async function CobranzaDetallePage({
     fechaIncorporacion: row.fecha_incorporacion,
   }))
 
+  const comprobantesPorPago = new Map<string, ComprobanteRow[]>()
+  for (const row of comprobantesData ?? []) {
+    const lista = comprobantesPorPago.get(row.pago_id) ?? []
+    lista.push({
+      id: row.id,
+      nombreOriginal: row.nombre_original,
+      tipoArchivo: row.tipo_archivo,
+      tamanoBytes: row.tamano_bytes,
+      rutaAlmacenamiento: row.ruta_almacenamiento,
+    })
+    comprobantesPorPago.set(row.pago_id, lista)
+  }
+
   const pagos = (pagosData ?? []).map((row) => ({
     id: row.id,
     monto: row.monto,
     fechaPago: row.fecha_pago,
+    metodoPagoId: row.metodo_pago_id,
     comentario: row.comentario,
     metodoPagoNombre: row.metodos_pago?.nombre ?? '',
+    estado: row.estado as 'activo' | 'revertido' | 'eliminado',
+    motivoReversion: row.motivo_reversion,
+    comprobantes: comprobantesPorPago.get(row.id) ?? [],
   }))
 
   const metodosPagoDisponibles = (metodosData ?? []).map((row) => ({
@@ -107,6 +145,15 @@ export default async function CobranzaDetallePage({
         onRegistrarPago={registrarPago.bind(null, cobranzaId)}
         onEliminarCobranza={eliminarCobranza.bind(null, cobranzaId)}
         onCancelarCobranza={cancelarCobranza.bind(null, cobranzaId)}
+        onModificarPago={(pagoId, values) => modificarPago(cobranzaId, pagoId, values)}
+        onRevertirPago={(pagoId, motivo) => revertirPago(cobranzaId, pagoId, motivo)}
+        onEliminarPago={(pagoId) => eliminarPago(cobranzaId, pagoId)}
+        onAdjuntarComprobante={(pagoId, formData) =>
+          adjuntarComprobante(cobranzaId, pagoId, formData)
+        }
+        onEliminarComprobante={(comprobanteId, ruta) =>
+          eliminarComprobante(cobranzaId, comprobanteId, ruta)
+        }
       />
     </Container>
   )

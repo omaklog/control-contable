@@ -84,3 +84,13 @@ export {
   configuracionCobranzaFormSchema,
   type ConfiguracionCobranzaFormValues,
 } from './configuracionCobranzaForm'
+export {
+  modificarPagoFormSchema,
+  mapearErrorModificarPagoAMensaje,
+  type ModificarPagoFormValues,
+} from './modificarPagoForm'
+export {
+  revertirPagoFormSchema,
+  mapearErrorRevertirPagoAMensaje,
+  type RevertirPagoFormValues,
+} from './revertirPagoForm'

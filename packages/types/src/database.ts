@@ -269,6 +269,47 @@ export type Database = {
           },
         ]
       }
+      comprobantes_pago: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          nombre_original: string
+          pago_id: string
+          ruta_almacenamiento: string
+          tamano_bytes: number
+          tipo_archivo: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nombre_original: string
+          pago_id: string
+          ruta_almacenamiento: string
+          tamano_bytes: number
+          tipo_archivo: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nombre_original?: string
+          pago_id?: string
+          ruta_almacenamiento?: string
+          tamano_bytes?: number
+          tipo_archivo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'comprobantes_pago_pago_id_fkey'
+            columns: ['pago_id']
+            isOneToOne: false
+            referencedRelation: 'pagos'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       conceptos_cobranza: {
         Row: {
           cargo_extraordinario_id: string | null
@@ -864,10 +905,12 @@ export type Database = {
           comentario: string | null
           created_at: string
           created_by: string | null
+          estado: Database['public']['Enums']['pago_estado']
           fecha_pago: string
           id: string
           metodo_pago_id: string
           monto: number
+          motivo_reversion: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -876,10 +919,12 @@ export type Database = {
           comentario?: string | null
           created_at?: string
           created_by?: string | null
+          estado?: Database['public']['Enums']['pago_estado']
           fecha_pago?: string
           id?: string
           metodo_pago_id: string
           monto: number
+          motivo_reversion?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -888,10 +933,12 @@ export type Database = {
           comentario?: string | null
           created_at?: string
           created_by?: string | null
+          estado?: Database['public']['Enums']['pago_estado']
           fecha_pago?: string
           id?: string
           metodo_pago_id?: string
           monto?: number
+          motivo_reversion?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -1415,6 +1462,7 @@ export type Database = {
       documento_estado: 'activo' | 'reemplazado' | 'eliminado'
       obligacion_fiscal_cliente_estado: 'activa' | 'no_aplica'
       obligacion_fiscal_estado: 'activo' | 'inactivo'
+      pago_estado: 'activo' | 'revertido' | 'eliminado'
       periodicidad_estado: 'activo' | 'inactivo'
       plantilla_obligaciones_estado: 'activo' | 'inactivo'
       servicio_contratado_estado: 'activo' | 'suspendido' | 'finalizado'
@@ -2074,6 +2122,7 @@ export const Constants = {
       documento_estado: ['activo', 'reemplazado', 'eliminado'],
       obligacion_fiscal_cliente_estado: ['activa', 'no_aplica'],
       obligacion_fiscal_estado: ['activo', 'inactivo'],
+      pago_estado: ['activo', 'revertido', 'eliminado'],
       periodicidad_estado: ['activo', 'inactivo'],
       plantilla_obligaciones_estado: ['activo', 'inactivo'],
       servicio_contratado_estado: ['activo', 'suspendido', 'finalizado'],

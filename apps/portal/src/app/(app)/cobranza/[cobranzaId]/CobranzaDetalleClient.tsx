@@ -1,6 +1,13 @@
 'use client'
 
-import { pagoCobranzaFormSchema, type PagoCobranzaFormValues } from '@control-contable/utils'
+import {
+  modificarPagoFormSchema,
+  pagoCobranzaFormSchema,
+  revertirPagoFormSchema,
+  type ModificarPagoFormValues,
+  type PagoCobranzaFormValues,
+  type RevertirPagoFormValues,
+} from '@control-contable/utils'
 import { StatusChip } from '@control-contable/ui'
 import Alert from '@mui/material/Alert'
 import Autocomplete from '@mui/material/Autocomplete'
@@ -11,6 +18,9 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import IconButton from '@mui/material/IconButton'
+import List from '@mui/material/List'
+import ListItem from '@mui/material/ListItem'
+import ListItemText from '@mui/material/ListItemText'
 import Paper from '@mui/material/Paper'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
@@ -20,10 +30,13 @@ import TableRow from '@mui/material/TableRow'
 import TextField from '@mui/material/TextField'
 import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
+import AttachFileIcon from '@mui/icons-material/AttachFile'
 import BlockIcon from '@mui/icons-material/Block'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
+import EditIcon from '@mui/icons-material/Edit'
+import UndoIcon from '@mui/icons-material/Undo'
 import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
+import { useRef, useState, useTransition } from 'react'
 
 export interface CobranzaDetalle {
   id: string
@@ -48,12 +61,24 @@ export interface ConceptoRow {
   fechaIncorporacion: string
 }
 
+export interface ComprobanteRow {
+  id: string
+  nombreOriginal: string
+  tipoArchivo: string
+  tamanoBytes: number
+  rutaAlmacenamiento: string
+}
+
 export interface PagoRow {
   id: string
   monto: number
   fechaPago: string
+  metodoPagoId: string
   comentario: string | null
   metodoPagoNombre: string
+  estado: 'activo' | 'revertido' | 'eliminado'
+  motivoReversion: string | null
+  comprobantes: ComprobanteRow[]
 }
 
 interface OpcionMetodoPago {
@@ -92,8 +117,26 @@ const ETIQUETA_TIPO_CONCEPTO: Record<string, string> = {
   cargo_extraordinario: 'Cargo extraordinario',
 }
 
+const ETIQUETA_ESTADO_PAGO_ROW: Record<string, string> = {
+  activo: 'Activo',
+  revertido: 'Revertido',
+  eliminado: 'Eliminado',
+}
+
+const VARIANTE_ESTADO_PAGO_ROW: Record<string, 'positivo' | 'negativo' | 'neutro'> = {
+  activo: 'positivo',
+  revertido: 'negativo',
+  eliminado: 'neutro',
+}
+
 function formatearMoneda(monto: number): string {
   return monto.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })
+}
+
+function formatearTamano(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
 const VALORES_PAGO_VACIOS: PagoCobranzaFormValues = {
@@ -103,11 +146,16 @@ const VALORES_PAGO_VACIOS: PagoCobranzaFormValues = {
   comentario: '',
 }
 
+const VALORES_REVERSION_VACIOS: RevertirPagoFormValues = { motivoReversion: '' }
+
 /**
- * Detalle de una Cobranza (017-cobranza, US2): conceptos congelados, pagos
- * registrados, saldo y estados (siempre recibidos ya calculados desde
- * `cobranzas_resumen`, page.tsx). El formulario de pago solo se muestra
- * cuando la cobranza está vigente.
+ * Detalle de una Cobranza (017-cobranza, US2; extendido en 018-gestion-pagos
+ * US1/US2/US3/US4/US6): conceptos congelados, historial de pagos con estado
+ * (Activo/Revertido/Eliminado) y comprobantes, saldo y estados (siempre
+ * recibidos ya calculados desde `cobranzas_resumen`, page.tsx). Las acciones
+ * de modificar/revertir/eliminar solo se muestran sobre pagos activos —
+ * revertido/eliminado son estados finales (contracts/db-functions-rls.md
+ * Sección B).
  */
 export function CobranzaDetalleClient({
   cobranza,
@@ -118,6 +166,11 @@ export function CobranzaDetalleClient({
   onRegistrarPago,
   onEliminarCobranza,
   onCancelarCobranza,
+  onModificarPago,
+  onRevertirPago,
+  onEliminarPago,
+  onAdjuntarComprobante,
+  onEliminarComprobante,
 }: {
   cobranza: CobranzaDetalle
   conceptos: ConceptoRow[]
@@ -127,6 +180,14 @@ export function CobranzaDetalleClient({
   onRegistrarPago: (values: PagoCobranzaFormValues) => Promise<ActionResult>
   onEliminarCobranza: () => Promise<ActionResult>
   onCancelarCobranza: () => Promise<ActionResult>
+  onModificarPago: (pagoId: string, values: ModificarPagoFormValues) => Promise<ActionResult>
+  onRevertirPago: (pagoId: string, motivoReversion: string) => Promise<ActionResult>
+  onEliminarPago: (pagoId: string) => Promise<ActionResult>
+  onAdjuntarComprobante: (pagoId: string, formData: FormData) => Promise<ActionResult>
+  onEliminarComprobante: (
+    comprobanteId: string,
+    rutaAlmacenamiento: string,
+  ) => Promise<ActionResult>
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -136,8 +197,26 @@ export function CobranzaDetalleClient({
   const [confirmEliminar, setConfirmEliminar] = useState(false)
   const [confirmCancelar, setConfirmCancelar] = useState(false)
 
+  const [pagoEnEdicion, setPagoEnEdicion] = useState<PagoRow | null>(null)
+  const [valoresEdicion, setValoresEdicion] = useState<ModificarPagoFormValues>(VALORES_PAGO_VACIOS)
+  const [errorEdicion, setErrorEdicion] = useState<string | null>(null)
+
+  const [pagoARevertir, setPagoARevertir] = useState<PagoRow | null>(null)
+  const [valoresReversion, setValoresReversion] =
+    useState<RevertirPagoFormValues>(VALORES_REVERSION_VACIOS)
+  const [errorReversion, setErrorReversion] = useState<string | null>(null)
+
+  const [pagoAEliminar, setPagoAEliminar] = useState<PagoRow | null>(null)
+
+  const [pagoComprobantesId, setPagoComprobantesId] = useState<string | null>(null)
+  const pagoComprobantes = pagos.find((pago) => pago.id === pagoComprobantesId) ?? null
+  const [errorComprobantes, setErrorComprobantes] = useState<string | null>(null)
+  const inputArchivoRef = useRef<HTMLInputElement | null>(null)
+
   const metodoSeleccionado =
     metodosPagoDisponibles.find((m) => m.id === formValues.metodoPagoId) ?? null
+  const metodoEdicionSeleccionado =
+    metodosPagoDisponibles.find((m) => m.id === valoresEdicion.metodoPagoId) ?? null
   const sinPagos = pagos.length === 0
 
   function registrarPago() {
@@ -156,6 +235,104 @@ export function CobranzaDetalleClient({
         })
       })
       .catch((validationError: Error) => setFormError(validationError.message))
+  }
+
+  function abrirEdicion(pago: PagoRow) {
+    setPagoEnEdicion(pago)
+    setErrorEdicion(null)
+    setValoresEdicion({
+      monto: String(pago.monto),
+      metodoPagoId: pago.metodoPagoId,
+      fechaPago: pago.fechaPago.slice(0, 10),
+      comentario: pago.comentario ?? '',
+    })
+  }
+
+  function guardarEdicion() {
+    if (!pagoEnEdicion) return
+    setErrorEdicion(null)
+    modificarPagoFormSchema
+      .validate(valoresEdicion)
+      .then(() => {
+        startTransition(async () => {
+          const result = await onModificarPago(pagoEnEdicion.id, valoresEdicion)
+          if (result.error) {
+            setErrorEdicion(result.error)
+            return
+          }
+          setPagoEnEdicion(null)
+          router.refresh()
+        })
+      })
+      .catch((validationError: Error) => setErrorEdicion(validationError.message))
+  }
+
+  function abrirReversion(pago: PagoRow) {
+    setPagoARevertir(pago)
+    setErrorReversion(null)
+    setValoresReversion(VALORES_REVERSION_VACIOS)
+  }
+
+  function confirmarReversion() {
+    if (!pagoARevertir) return
+    setErrorReversion(null)
+    revertirPagoFormSchema
+      .validate(valoresReversion)
+      .then(() => {
+        startTransition(async () => {
+          const result = await onRevertirPago(pagoARevertir.id, valoresReversion.motivoReversion)
+          if (result.error) {
+            setErrorReversion(result.error)
+            return
+          }
+          setPagoARevertir(null)
+          router.refresh()
+        })
+      })
+      .catch((validationError: Error) => setErrorReversion(validationError.message))
+  }
+
+  function confirmarEliminarPago() {
+    if (!pagoAEliminar) return
+    startTransition(async () => {
+      const result = await onEliminarPago(pagoAEliminar.id)
+      setPagoAEliminar(null)
+      if (result.error) {
+        setGlobalError(result.error)
+        return
+      }
+      router.refresh()
+    })
+  }
+
+  function subirComprobantes(archivos: FileList | null) {
+    if (!pagoComprobantes || !archivos || archivos.length === 0) return
+    setErrorComprobantes(null)
+    const formData = new FormData()
+    for (const archivo of Array.from(archivos)) {
+      formData.append('archivos', archivo)
+    }
+    startTransition(async () => {
+      const result = await onAdjuntarComprobante(pagoComprobantes.id, formData)
+      if (result.error) {
+        setErrorComprobantes(result.error)
+        return
+      }
+      if (inputArchivoRef.current) inputArchivoRef.current.value = ''
+      router.refresh()
+    })
+  }
+
+  function eliminarComprobante(comprobanteId: string, ruta: string) {
+    setErrorComprobantes(null)
+    startTransition(async () => {
+      const result = await onEliminarComprobante(comprobanteId, ruta)
+      if (result.error) {
+        setErrorComprobantes(result.error)
+        return
+      }
+      router.refresh()
+    })
   }
 
   function confirmarEliminar() {
@@ -330,6 +507,9 @@ export function CobranzaDetalleClient({
                 <TableCell>Método</TableCell>
                 <TableCell>Monto</TableCell>
                 <TableCell>Comentario</TableCell>
+                <TableCell>Estado</TableCell>
+                <TableCell>Comprobantes</TableCell>
+                {canManage ? <TableCell align="right">Acciones</TableCell> : null}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -339,6 +519,78 @@ export function CobranzaDetalleClient({
                   <TableCell>{pago.metodoPagoNombre}</TableCell>
                   <TableCell>{formatearMoneda(pago.monto)}</TableCell>
                   <TableCell>{pago.comentario ?? '—'}</TableCell>
+                  <TableCell>
+                    <Tooltip
+                      title={pago.motivoReversion ?? ''}
+                      disableHoverListener={!pago.motivoReversion}
+                    >
+                      <span>
+                        <StatusChip
+                          status={pago.estado}
+                          variant={VARIANTE_ESTADO_PAGO_ROW[pago.estado] ?? 'neutro'}
+                          label={ETIQUETA_ESTADO_PAGO_ROW[pago.estado] ?? pago.estado}
+                        />
+                      </span>
+                    </Tooltip>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      size="small"
+                      startIcon={<AttachFileIcon fontSize="small" />}
+                      onClick={() => {
+                        setErrorComprobantes(null)
+                        setPagoComprobantesId(pago.id)
+                      }}
+                    >
+                      {pago.comprobantes.length}
+                    </Button>
+                  </TableCell>
+                  {canManage ? (
+                    <TableCell align="right">
+                      {pago.estado === 'activo' ? (
+                        <>
+                          <Tooltip title="Modificar pago">
+                            <span>
+                              <IconButton
+                                size="small"
+                                disabled={isPending}
+                                onClick={() => abrirEdicion(pago)}
+                                aria-label="Modificar pago"
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                          <Tooltip title="Revertir pago">
+                            <span>
+                              <IconButton
+                                size="small"
+                                color="warning"
+                                disabled={isPending}
+                                onClick={() => abrirReversion(pago)}
+                                aria-label="Revertir pago"
+                              >
+                                <UndoIcon fontSize="small" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                          <Tooltip title="Eliminar pago">
+                            <span>
+                              <IconButton
+                                size="small"
+                                color="error"
+                                disabled={isPending}
+                                onClick={() => setPagoAEliminar(pago)}
+                                aria-label="Eliminar pago"
+                              >
+                                <DeleteOutlineIcon fontSize="small" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        </>
+                      ) : null}
+                    </TableCell>
+                  ) : null}
                 </TableRow>
               ))}
             </TableBody>
@@ -431,6 +683,167 @@ export function CobranzaDetalleClient({
           <Button variant="contained" color="error" onClick={confirmarCancelar}>
             Confirmar
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={pagoEnEdicion !== null} onClose={() => setPagoEnEdicion(null)}>
+        <DialogTitle>Modificar pago</DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+          {errorEdicion ? <Alert severity="error">{errorEdicion}</Alert> : null}
+          <TextField
+            label="Monto"
+            type="number"
+            size="small"
+            value={valoresEdicion.monto}
+            onChange={(event) =>
+              setValoresEdicion({ ...valoresEdicion, monto: event.target.value })
+            }
+          />
+          <Autocomplete
+            options={metodosPagoDisponibles}
+            getOptionLabel={(option) => option.nombre}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            value={metodoEdicionSeleccionado}
+            onChange={(_event, value) =>
+              setValoresEdicion({ ...valoresEdicion, metodoPagoId: value?.id ?? '' })
+            }
+            renderInput={({ InputLabelProps, InputProps, size: _size, ...rest }) => (
+              <TextField
+                {...rest}
+                slotProps={{ inputLabel: InputLabelProps, input: InputProps }}
+                label="Método de pago"
+                size="small"
+              />
+            )}
+          />
+          <TextField
+            label="Fecha de pago"
+            type="date"
+            size="small"
+            value={valoresEdicion.fechaPago}
+            onChange={(event) =>
+              setValoresEdicion({ ...valoresEdicion, fechaPago: event.target.value })
+            }
+            slotProps={{ inputLabel: { shrink: true } }}
+          />
+          <TextField
+            label="Comentario"
+            size="small"
+            value={valoresEdicion.comentario}
+            onChange={(event) =>
+              setValoresEdicion({ ...valoresEdicion, comentario: event.target.value })
+            }
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPagoEnEdicion(null)}>Cancelar</Button>
+          <Button variant="contained" disabled={isPending} onClick={guardarEdicion}>
+            Guardar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={pagoARevertir !== null} onClose={() => setPagoARevertir(null)}>
+        <DialogTitle>Revertir pago</DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+          <Typography>
+            El pago conservará su registro histórico, pero dejará de contarse en el saldo. Esta
+            acción requiere un motivo y no puede deshacerse.
+          </Typography>
+          {errorReversion ? <Alert severity="error">{errorReversion}</Alert> : null}
+          <TextField
+            label="Motivo de la reversión"
+            size="small"
+            multiline
+            minRows={2}
+            value={valoresReversion.motivoReversion}
+            onChange={(event) => setValoresReversion({ motivoReversion: event.target.value })}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPagoARevertir(null)}>Cancelar</Button>
+          <Button
+            variant="contained"
+            color="warning"
+            disabled={isPending}
+            onClick={confirmarReversion}
+          >
+            Revertir
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={pagoAEliminar !== null} onClose={() => setPagoAEliminar(null)}>
+        <DialogTitle>Eliminar pago</DialogTitle>
+        <DialogContent>
+          <Typography>
+            ¿Seguro que deseas eliminar lógicamente este pago? Dejará de contarse en el saldo, pero
+            su registro se conservará para auditoría.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPagoAEliminar(null)}>Cancelar</Button>
+          <Button variant="contained" color="error" onClick={confirmarEliminarPago}>
+            Confirmar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={pagoComprobantes !== null}
+        onClose={() => setPagoComprobantesId(null)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Comprobantes del pago</DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {errorComprobantes ? <Alert severity="error">{errorComprobantes}</Alert> : null}
+          {pagoComprobantes && pagoComprobantes.comprobantes.length === 0 ? (
+            <Typography color="text.secondary">Este pago no tiene comprobantes.</Typography>
+          ) : (
+            <List dense>
+              {pagoComprobantes?.comprobantes.map((comprobante) => (
+                <ListItem
+                  key={comprobante.id}
+                  secondaryAction={
+                    canManage ? (
+                      <IconButton
+                        size="small"
+                        color="error"
+                        disabled={isPending}
+                        aria-label="Eliminar comprobante"
+                        onClick={() =>
+                          eliminarComprobante(comprobante.id, comprobante.rutaAlmacenamiento)
+                        }
+                      >
+                        <DeleteOutlineIcon fontSize="small" />
+                      </IconButton>
+                    ) : null
+                  }
+                >
+                  <ListItemText
+                    primary={comprobante.nombreOriginal}
+                    secondary={formatearTamano(comprobante.tamanoBytes)}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          )}
+          {canManage ? (
+            <Button component="label" variant="outlined" disabled={isPending}>
+              Adjuntar comprobantes
+              <input
+                ref={inputArchivoRef}
+                type="file"
+                multiple
+                hidden
+                onChange={(event) => subirComprobantes(event.target.files)}
+              />
+            </Button>
+          ) : null}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPagoComprobantesId(null)}>Cerrar</Button>
         </DialogActions>
       </Dialog>
     </Box>
