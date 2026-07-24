@@ -145,15 +145,11 @@ export default async function CobranzaDetallePage({
         onRegistrarPago={registrarPago.bind(null, cobranzaId)}
         onEliminarCobranza={eliminarCobranza.bind(null, cobranzaId)}
         onCancelarCobranza={cancelarCobranza.bind(null, cobranzaId)}
-        onModificarPago={(pagoId, values) => modificarPago(cobranzaId, pagoId, values)}
-        onRevertirPago={(pagoId, motivo) => revertirPago(cobranzaId, pagoId, motivo)}
-        onEliminarPago={(pagoId) => eliminarPago(cobranzaId, pagoId)}
-        onAdjuntarComprobante={(pagoId, formData) =>
-          adjuntarComprobante(cobranzaId, pagoId, formData)
-        }
-        onEliminarComprobante={(comprobanteId, ruta) =>
-          eliminarComprobante(cobranzaId, comprobanteId, ruta)
-        }
+        onModificarPago={modificarPago.bind(null, cobranzaId)}
+        onRevertirPago={revertirPago.bind(null, cobranzaId)}
+        onEliminarPago={eliminarPago.bind(null, cobranzaId)}
+        onAdjuntarComprobante={adjuntarComprobante.bind(null, cobranzaId)}
+        onEliminarComprobante={eliminarComprobante.bind(null, cobranzaId)}
       />
     </Container>
   )
